@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/colors.dart';
+import 'package:sense/utils/address.dart';
 import 'homepage.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<Address>(create: (_) => Address(null)),
+        ProxyProvider<Address, Sense?>(
+          create: (BuildContext context) => null,
+          update: (BuildContext context, Address address, Sense? sense) {
+            if (address.address == null) {
+              return null;
+            } else {
+              if (sense != null && address.address == sense.address) {
+                return sense;
+              } else {
+                return Sense(address.address!);
+              }
+            }
+          },
+        ),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -18,7 +42,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         disabledColor: MyColors.lightGrey,
         primaryColor: MyColors.grey,
-        accentColor: MyColors.orange,
+        accentColor: MyColors.brown,
+        scaffoldBackgroundColor: const Color(0xFFFEFEFE),
         primaryIconTheme: const IconThemeData(
           color: MyColors.orange,
         ),

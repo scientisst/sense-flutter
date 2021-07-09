@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:provider/provider.dart';
 import 'package:sense/ui/my_button.dart';
+import 'package:sense/utils/address.dart';
+import 'package:sense/utils/shared_pref.dart';
 
 class BluetoothSearch extends StatefulWidget {
   const BluetoothSearch({Key? key}) : super(key: key);
@@ -13,7 +18,8 @@ class BluetoothSearch extends StatefulWidget {
 class _BluetoothSearchState extends State<BluetoothSearch> {
   final Map<String, BluetoothDiscoveryResult> _devices = {};
   final List<String> _devicesOrder = [];
-  bool _searching = false;
+  bool _searching = true;
+  StreamSubscription? _subscription;
 
   @override
   void initState() {
@@ -21,15 +27,21 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     _searchDevices();
   }
 
-  void _searchDevices() {
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    FlutterBluetoothSerial.instance.cancelDiscovery();
+    super.dispose();
+  }
+
+  Future<void> _searchDevices() async {
     setState(() {
       _searching = true;
     });
 
     _devices.clear();
     _devicesOrder.clear();
-    final subscription =
-        FlutterBluetoothSerial.instance.startDiscovery().listen(
+    _subscription = FlutterBluetoothSerial.instance.startDiscovery().listen(
       (result) {
         if (result.device?.name?.toLowerCase().contains("scientisst") ??
             false) {
@@ -45,18 +57,26 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
               }
             }
           }
-          setState(() {
-            _devices[address] = result;
-          });
+          _devices[address] = result;
+          if (mounted) {
+            setState(() {});
+          }
         }
       },
     );
     Future.delayed(const Duration(seconds: 5)).then((_) {
-      subscription.cancel();
-      setState(() {
-        _searching = false;
-      });
+      _searching = false;
+      if (mounted) {
+        _subscription?.cancel();
+        FlutterBluetoothSerial.instance.cancelDiscovery();
+        setState(() {});
+      }
     });
+  }
+
+  Future<void> setDevice(String address) async {
+    Provider.of<Address>(context, listen: false).setAddress(address);
+    await SharedPref.write("address", address);
   }
 
   @override
@@ -89,11 +109,13 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                           .clamp(0.0, 1.0);
                   final device = _devices[_devicesOrder[index]]!.device!;
                   return ListTile(
-                    leading: const Icon(Icons.bluetooth),
-                    title: Text(device.name ?? ""),
-                    subtitle: Text(device.address!),
-                    trailing: SignalIcon(strength),
-                  );
+                      leading: const Icon(Icons.bluetooth),
+                      title: Text(device.name ?? ""),
+                      subtitle: Text(device.address!),
+                      trailing: SignalIcon(strength),
+                      onTap: () {
+                        setDevice(device.address!);
+                      });
                 },
               ),
             Align(
@@ -181,15 +203,15 @@ class _EmptyDevices extends StatelessWidget {
             constraints: const BoxConstraints(
               maxWidth: 300,
             ),
-            child:
-                Image.asset('assets/images/undraw_Location_search_re_ttoj.png'),
+            child: const Image(
+                image: AssetImage(
+                    'assets/images/undraw_Location_search_re_ttoj.png')),
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             "No ScientISST Sense devices found.",
             style: TextStyle(
               fontSize: 14,
-              color: Theme.of(context).disabledColor,
             ),
           ),
         ],

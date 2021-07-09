@@ -6,6 +6,7 @@ class MyButton extends StatelessWidget {
       this.activeWidget,
       this.inactiveWidget,
       required this.onPressed,
+      this.color,
       this.active = true,
       Key? key})
       : super(key: key);
@@ -14,6 +15,7 @@ class MyButton extends StatelessWidget {
   final Widget? inactiveWidget;
   final void Function() onPressed;
   final bool active;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,7 @@ class MyButton extends StatelessWidget {
         onPressed: active ? onPressed : null,
         style: ElevatedButton.styleFrom(
           primary: active
-              ? Theme.of(context).primaryColor
+              ? color ?? Theme.of(context).primaryColor
               : Theme.of(context).disabledColor,
         ),
         child: Container(

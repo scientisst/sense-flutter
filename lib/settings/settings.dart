@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/settings/bluetooth_search.dart';
 import 'package:sense/settings/device.dart';
 
-class Settings extends StatefulWidget {
-  const Settings({Key? key}) : super(key: key);
+class Settings extends StatelessWidget {
+  const Settings(this.sense, {Key? key}) : super(key: key);
 
-  @override
-  _SettingsState createState() => _SettingsState();
-}
+  final Sense? sense;
 
-class _SettingsState extends State<Settings> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Device("4C:11:AE:88:84:5A"),
-    );
+    if (sense == null) {
+      return const BluetoothSearch();
+    } else {
+      return Device(sense!);
+    }
   }
 }
