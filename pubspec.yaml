@@ -11,11 +11,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_bluetooth_serial: ^0.3.0
+  flutter_bluetooth_serial:
+    git:
+      url: https://github.com/Afonsocraposo/flutter_bluetooth_serial
   flutter_spinkit: ^5.0.0
   provider: ^5.0.0
   scientisst_sense:
-    path: ../apis/api-flutter
+    git:
+      url: https://github.com/scientisst/scientisst-sense-api-flutter
   shared_preferences: ^2.0.6
 
 dev_dependencies:

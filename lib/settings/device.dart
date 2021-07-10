@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:provider/provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -33,19 +34,30 @@ class _DeviceState extends State<Device> {
     super.dispose();
   }
 
-  void _connect() {
+  Future<void> _connect() async {
     if (mounted) {
       setState(() {
         _connecting = true;
         _disconnected = false;
       });
     }
-    widget.sense.connect(onDisconnect: () {
-      if (mounted) setState(() {});
-    }).whenComplete(() {
-      _connecting = false;
-      if (mounted) setState(() {});
-    });
+
+    // check if it's already paired or (if it's not paired) if pairing was successful
+    final paired = (await FlutterBluetoothSerial.instance
+                .getBondStateForAddress(widget.sense.address))
+            .isBonded ||
+        ((await FlutterBluetoothSerial.instance.bondDeviceAtAddress(
+                widget.sense.address,
+                passkeyConfirm: true)) ??
+            false);
+
+    if (paired) {
+      await widget.sense.connect(onDisconnect: () {
+        if (mounted) setState(() {});
+      });
+    }
+    _connecting = false;
+    if (mounted) setState(() {});
   }
 
   Future<void> _disconnect() async {
