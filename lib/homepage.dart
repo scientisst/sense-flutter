@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
-import 'package:sense/sense_plot.dart';
+import 'package:sense/acquisition/acquisition.dart';
 import 'package:sense/settings/settings.dart';
 import 'package:sense/utils/address.dart';
 import 'package:sense/utils/shared_pref.dart';
@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
               child: IndexedStack(
                 index: _currentIndex,
                 children: [
-                  SensePlot(
+                  Acquisition(
                     sense,
                     goToDevice: () {
                       setState(() {

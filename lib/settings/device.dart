@@ -52,17 +52,21 @@ class _DeviceState extends State<Device> {
             false);
 
     if (paired) {
-      await widget.sense.connect(onDisconnect: () {
-        if (mounted) setState(() {});
-      });
+      try {
+        await widget.sense.connect(onDisconnect: () {
+          if (mounted) setState(() {});
+        });
+      } on SenseException catch (e) {
+        if (e.type != SenseErrorType.DEVICE_NOT_FOUND) rethrow;
+      }
     }
     _connecting = false;
     if (mounted) setState(() {});
   }
 
   Future<void> _disconnect() async {
-    await widget.sense.disconnect();
     _disconnected = true;
+    await widget.sense.disconnect();
     if (mounted) setState(() {});
   }
 
@@ -203,7 +207,7 @@ class FailedConnect extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             constraints: const BoxConstraints(
-              maxWidth: 300,
+              maxWidth: 250,
             ),
             child: const Image(
               image: AssetImage('assets/images/undraw_warning_cyit.png'),
@@ -231,9 +235,9 @@ class Disconnected extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(16),
             constraints: const BoxConstraints(
-              maxWidth: 300,
+              maxWidth: 200,
             ),
             child: const Image(
               image:

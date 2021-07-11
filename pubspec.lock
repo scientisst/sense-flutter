@@ -93,10 +93,12 @@ packages:
   flutter_bluetooth_serial:
     dependency: "direct main"
     description:
-      name: flutter_bluetooth_serial
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.3.0"
+      path: "."
+      ref: HEAD
+      resolved-ref: db68ab5409b9448e0a621c52fa6d003789680d85
+      url: "https://github.com/Afonsocraposo/flutter_bluetooth_serial"
+    source: git
+    version: "0.3.0-dev.1"
   flutter_native_splash:
     dependency: "direct dev"
     description:
@@ -229,9 +231,11 @@ packages:
   scientisst_sense:
     dependency: "direct main"
     description:
-      path: "../apis/api-flutter"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: c5dd499b312115b340f357d00d646c3fbca258a5
+      url: "https://github.com/scientisst/scientisst-sense-api-flutter"
+    source: git
     version: "0.0.1"
   shared_preferences:
     dependency: "direct main"

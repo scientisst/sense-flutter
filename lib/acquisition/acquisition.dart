@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
+import 'package:sense/acquisition/options.dart';
 import 'package:sense/ui/my_button.dart';
 
-class SensePlot extends StatefulWidget {
-  const SensePlot(this.sense, {required this.goToDevice, Key? key})
+class Acquisition extends StatefulWidget {
+  const Acquisition(this.sense, {required this.goToDevice, Key? key})
       : super(key: key);
   final Sense? sense;
   final void Function() goToDevice;
 
   @override
-  _SensePlotState createState() => _SensePlotState();
+  _AcquisitionState createState() => _AcquisitionState();
 }
 
-class _SensePlotState extends State<SensePlot> {
+class _AcquisitionState extends State<Acquisition> {
   @override
   Widget build(BuildContext context) {
-    if (!(widget.sense?.connected ?? false)) {
+    if (widget.sense?.connected ?? false) {
+      return const Options();
+    } else {
       return Awaiting(widget.goToDevice);
     }
-    return const Center(
-      child: Text("Ready to start"),
-    );
   }
 }
 

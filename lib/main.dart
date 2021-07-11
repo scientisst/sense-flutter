@@ -5,6 +5,7 @@ import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/colors.dart';
 import 'package:sense/utils/address.dart';
 import 'homepage.dart';
+import 'acquisition/options.dart';
 
 void main() {
   runApp(
@@ -60,13 +61,26 @@ class MyApp extends StatelessWidget {
         buttonTheme: const ButtonThemeData(buttonColor: MyColors.brown),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
+            //primary: MyColors.brown,
+            //onPrimary: Colors.grey[1000],
+            //onSurface: Colors.grey[1000],
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ), //alignment: Alignment.center,
           ),
         ),
+        sliderTheme: SliderThemeData.fromPrimaryColors(
+          primaryColor: MyColors.brown,
+          primaryColorDark: MyColors.lightGrey,
+          primaryColorLight: MyColors.grey,
+          valueIndicatorTextStyle: TextStyle(),
+        ),
       ),
-      home: const HomePage(),
+      home: const Scaffold(
+        body: SafeArea(
+          child: Options(),
+        ),
+      ),
     );
   }
 }
