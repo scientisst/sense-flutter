@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
@@ -45,40 +46,35 @@ class FileWriter {
 
     final timestamp = start.toIso8601String();
 
-    _writeMetadata("Timestamp", timestamp);
-    _writeMetadata("Sampling Rate (Hz)", _fs);
-    _writeMetadata(
-      "Channels",
-      List<String>.from(
+    final metadata = {
+      "Timestamp": timestamp,
+      "Sampling Rate (Hz)": _fs,
+      "Channels": List<String>.from(
         _channels.map(
           (int i) => LABELS[i - 1],
         ),
       ),
-    );
-    _writeMetadata("Labels", _labels);
-    _writeMetadata(
-      "Resolution (bits)",
-      List<int>.from(
-        _channels.map(
-          (int i) => RESOLUTIONS[i - 1],
-        ),
-      ),
-    );
+      "Labels": _labels,
+      "Resolution (bits)": [4, 1, 1, 1, 1] +
+          List<int>.from(
+            _channels.map(
+              (int i) => RESOLUTIONS[i - 1],
+            ),
+          ),
+    };
+
+    _sink.write("# ${jsonEncode(metadata)}\n");
 
     _sink.write("\n");
 
     _sink.write("NSeq, I1, I2, O1, O2, ${_labels.join(", ")}\n");
   }
 
-  void _writeMetadata(String title, dynamic value) {
-    _sink.write("# $title = $value\n");
-  }
-
   Future<void> write(Frame frame) async {
     if (_writing) {
       if (!_headerWritten) await _writeHeader();
       _sink.write(
-          "${frame.seq}, ${frame.digital.join(", ")}, ${frame.a.where((value) => value != null).join(", ")}\n");
+          "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${frame.a.where((value) => value != null).join(", ")}\n");
     }
   }
 

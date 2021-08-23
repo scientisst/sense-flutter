@@ -45,7 +45,8 @@ class _AcquisitionsState extends State<Acquisitions> {
                   );
                 } else {
                   final items = snap.data!;
-                  return ListView.builder(
+                  return ListView.separated(
+                    separatorBuilder: (context, _) => const Divider(),
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final path =
@@ -57,9 +58,9 @@ class _AcquisitionsState extends State<Acquisitions> {
                             filename.substring(6, filename.length - 4),
                           ),
                         ).toString()),
-                        subtitle: Text(path),
+                        subtitle: Text(filename),
                         leading: const Icon(Icons.stacked_line_chart_rounded),
-                        onTap:()=>OpenFile.open(path),
+                        onTap: () => OpenFile.open(path),
                         /*onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => Review(path),

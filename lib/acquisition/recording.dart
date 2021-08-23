@@ -54,25 +54,27 @@ class _RecordingState extends State<Recording> {
         return;
       }
 
-      await _connect();
+      if (await _connect()) {
+        _startAcquisition();
+      }
 
       starting = false;
 
-      await _startAcquisition();
+      if (mounted) setState(() {});
     }
   }
 
-  Future<void> _connect() async {
+  Future<bool> _connect() async {
     try {
       await _sense.connect(onDisconnect: () {
         //TODO: handle disconnect during acquisition
         if (mounted) setState(() {});
       });
-      _connecting = false;
-      if (mounted) setState(() {});
     } on SenseException catch (e) {
       if (e.type != SenseErrorType.DEVICE_NOT_FOUND) rethrow;
     }
+    _connecting = false;
+    return _sense.connected;
   }
 
   Future<void> _startAcquisition() async {
@@ -102,17 +104,12 @@ class _RecordingState extends State<Recording> {
 
       await _sense.start(settings.samplingRate, settings.channels);
 
-      try {
-        final numFrames = settings.samplingRate ~/ REFRESH_RATE;
-        if (settings.save) {
-          _stream = _saveStream(numFrames);
-        } else {
-          _stream = _doNotSaveStream(numFrames);
-        }
-      } on SenseErrorType catch (_) {
-        debugPrint("catched error");
+      final numFrames = settings.samplingRate ~/ REFRESH_RATE;
+      if (settings.save) {
+        _stream = _saveStream(numFrames);
+      } else {
+        _stream = _doNotSaveStream(numFrames);
       }
-
       _refresh = Timer.periodic(
           const Duration(milliseconds: 1000 ~/ REFRESH_RATE), (Timer timer) {
         if (mounted) {
@@ -208,6 +205,7 @@ class _RecordingState extends State<Recording> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final duration = _sense.acquiring ? DateTime.now().difference(start) : null;
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -224,7 +222,7 @@ class _RecordingState extends State<Recording> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      DateTime.now().difference(start).toString(),
+                      settings.plot ? "$duration" : "Recording",
                     ),
                   ],
                 )
@@ -236,55 +234,70 @@ class _RecordingState extends State<Recording> {
               return const Connecting();
             } else {
               if (!_sense.connected) {
-                return FailedConnect(_connect);
+                return FailedConnect(() async {
+                  await _connect();
+                  if (_sense.connected && !_sense.acquiring) {
+                    _startAcquisition();
+                  }
+                });
               } else {
                 return Column(
                   children: [
                     Expanded(
-                      child: ListView(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.all(8),
-                            height: 300,
-                            child: Stack(
+                      child: settings.plot
+                          ? ListView(
                               children: [
-                                Card(
-                                  elevation: 3,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 40,
-                                      left: 40,
-                                      bottom: 28,
-                                      right: 30,
-                                    ),
-                                    child: Chart(_time, _data),
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.topCenter,
-                                  child: MaterialButton(
-                                    color: Colors.blue,
-                                    shape: const CircleBorder(),
-                                    elevation: 3,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    onPressed: () {},
-                                    child: const Text(
-                                      "AI1",
-                                      style: TextStyle(
-                                        color: Colors.white,
+                                Container(
+                                  margin: const EdgeInsets.all(8),
+                                  height: 300,
+                                  child: Stack(
+                                    children: [
+                                      Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 40,
+                                            left: 40,
+                                            bottom: 28,
+                                            right: 30,
+                                          ),
+                                          child: Chart(_time, _data),
+                                        ),
                                       ),
-                                    ),
+                                      Align(
+                                        alignment: Alignment.topCenter,
+                                        child: MaterialButton(
+                                          color: Colors.blue,
+                                          shape: const CircleBorder(),
+                                          elevation: 3,
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          onPressed: () {},
+                                          child: const Text(
+                                            "AI1",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
+                            )
+                          : Center(
+                              child: Text(
+                                "$duration",
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                     Container(
                       margin: const EdgeInsets.symmetric(
@@ -296,7 +309,7 @@ class _RecordingState extends State<Recording> {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) => SliderButton(
-                          dismissible: false,
+                          //dismissible: true,
                           width: constraints.maxWidth,
                           buttonColor: theme.accentColor,
                           backgroundColor: Colors.grey[200]!,

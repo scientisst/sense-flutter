@@ -34,8 +34,6 @@ class Device extends StatefulWidget {
 class _DeviceState extends State<Device> {
   int _fs = 5;
   final _channels = [false, false, false, false, false, false, false, false];
-  bool _plot = true;
-  bool _save = true;
   int duration = 0;
   late DeviceSettings settings;
 
@@ -128,11 +126,12 @@ class _DeviceState extends State<Device> {
             SwitchListTile(
               title: const Text("Plot signals"),
               subtitle: const Text("Might affect performance"),
-              value: _plot,
-              onChanged: (value) {
+              value: settings.plot,
+              onChanged: (value) async {
                 setState(() {
-                  _plot = value;
+                  settings.plot = value;
                 });
+                await SharedPref.write("plot", value);
               },
             ),
             SwitchListTile(
