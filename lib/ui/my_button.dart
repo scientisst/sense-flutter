@@ -21,30 +21,45 @@ class MyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final textWidget = Text(
       text ?? "",
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 22,
+        color: active ? null : Colors.grey[500],
       ),
     );
-    return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: ElevatedButton(
-        onPressed: active ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          primary: active
-              ? color ?? Theme.of(context).primaryColor
-              : Theme.of(context).disabledColor,
-        ),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 12,
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            stops: [0, 0.8],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Colors.white,
+              Color(0x00FFFFFF),
+            ],
           ),
-          alignment: Alignment.center,
-          child: active
-              ? (activeWidget ?? textWidget)
-              : (inactiveWidget ?? textWidget),
+        ),
+        child: ElevatedButton(
+          onPressed: active ? onPressed : () {},
+          style: ElevatedButton.styleFrom(
+            primary: active
+                ? color ?? Theme.of(context).primaryColor
+                : Colors.grey[300],
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 12,
+            ),
+            alignment: Alignment.center,
+            child: active
+                ? (activeWidget ?? textWidget)
+                : (inactiveWidget ?? textWidget),
+          ),
         ),
       ),
     );

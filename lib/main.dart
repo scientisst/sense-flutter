@@ -1,32 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/colors.dart';
-import 'package:sense/utils/address.dart';
+import 'package:sense/utils/device_settings.dart';
 import 'homepage.dart';
-import 'acquisition/options.dart';
 
 void main() {
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<Address>(create: (_) => Address(null)),
-        ProxyProvider<Address, Sense?>(
-          create: (BuildContext context) => null,
-          update: (BuildContext context, Address address, Sense? sense) {
-            if (address.address == null) {
-              return null;
-            } else {
-              if (sense != null && address.address == sense.address) {
-                return sense;
-              } else {
-                return Sense(address.address!);
-              }
-            }
-          },
-        ),
-      ],
+    ChangeNotifierProvider(
+      create: (context) {
+        return DeviceSettings();
+      },
       child: MyApp(),
     ),
   );
@@ -73,12 +57,13 @@ class MyApp extends StatelessWidget {
           primaryColor: MyColors.brown,
           primaryColorDark: MyColors.lightGrey,
           primaryColorLight: MyColors.grey,
-          valueIndicatorTextStyle: TextStyle(),
+          valueIndicatorTextStyle: const TextStyle(),
         ),
       ),
       home: const Scaffold(
         body: SafeArea(
-          child: Options(),
+          child: HomePage(),
+          //child: Options(),
         ),
       ),
     );
