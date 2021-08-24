@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:path_provider/path_provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
 
@@ -17,7 +18,11 @@ class FileWriter {
   bool _writing = true;
   bool _headerWritten = false;
 
-  final start;
+  final DateTime start;
+
+  late Isolate isolate;
+
+  ReceivePort receivePort = ReceivePort();
 
   FileWriter({
     required List<int> channels,
@@ -38,13 +43,42 @@ class FileWriter {
     }
   }
 
-  Future<void> _writeHeader() async {
-    _headerWritten = true;
-    file = File(
-        "${(await getApplicationDocumentsDirectory()).path}/sense_${DateTime.now().millisecondsSinceEpoch}.csv");
-    _sink = file.openWrite(mode: FileMode.append);
+  Future<void> spawnNewIsolate() async {
+    try {
+      isolate = await Isolate.spawn(sayHello, receivePort.sendPort);
 
-    final timestamp = start.toIso8601String();
+      receivePort.listen((dynamic message) {
+        print('New message from Isolate: $message');
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  static void myIsolate(SendPort isolateToMainStream) {
+    final mainToIsolateStream = ReceivePort();
+    isolateToMainStream.send(mainToIsolateStream.sendPort);
+
+    late IOSink sink;
+    mainToIsolateStream.listen((data) {
+      if (data is Frame) {
+        write(sink, data);
+      } else if (data is IOSink) {
+        sink = data;
+      } else {}
+    });
+
+    isolateToMainStream.send('This is from myIsolate()');
+  }
+
+  static Future<void> _writeHeader(
+      IOSink sink, Map<String, dynamic> metadata) async {
+    //_headerWritten = true;
+    //file = File(
+    //"${(await getApplicationDocumentsDirectory()).path}/sense_${DateTime.now().millisecondsSinceEpoch}.csv");
+    //_sink = file.openWrite(mode: FileMode.append);
+
+    /*final timestamp = start.toIso8601String();
 
     final metadata = {
       "Timestamp": timestamp,
@@ -61,21 +95,23 @@ class FileWriter {
               (int i) => RESOLUTIONS[i - 1],
             ),
           ),
-    };
+    };*/
 
-    _sink.write("# ${jsonEncode(metadata)}\n");
+    sink.write("# ${jsonEncode(metadata)}\n");
 
-    _sink.write("\n");
+    sink.write("\n");
 
-    _sink.write("NSeq, I1, I2, O1, O2, ${_labels.join(", ")}\n");
+    final labels = metadata["Labels"] as List<String>;
+
+    sink.write("NSeq, I1, I2, O1, O2, ${labels.join(", ")}\n");
   }
 
-  Future<void> write(Frame frame) async {
-    if (_writing) {
-      if (!_headerWritten) await _writeHeader();
-      _sink.write(
-          "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${frame.a.where((value) => value != null).join(", ")}\n");
-    }
+  static Future<void> write(IOSink sink, Frame frame) async {
+    //if (_writing) {
+    //if (!_headerWritten) await _writeHeader();
+    sink.write(
+        "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${frame.a.where((value) => value != null).join(", ")}\n");
+    //}
   }
 
   File close() {
