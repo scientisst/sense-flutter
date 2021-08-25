@@ -343,9 +343,11 @@ packages:
   scientisst_sense:
     dependency: "direct main"
     description:
-      path: "/home/robot/Documents/ScientISST/sense/apis/api-flutter"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: a1c6348e7e054ececdde95355dcb6fdaa76fb588
+      url: "https://github.com/scientisst/scientisst-sense-api-flutter"
+    source: git
     version: "0.0.1"
   shared_preferences:
     dependency: "direct main"

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
 
@@ -12,17 +14,13 @@ class FileWriter {
   late List<String> _labels;
   late int _fs;
 
-  late File file;
-  late IOSink _sink;
-
-  bool _writing = true;
-  bool _headerWritten = false;
-
   final DateTime start;
 
   late Isolate isolate;
-
-  ReceivePort receivePort = ReceivePort();
+  late ReceivePort receivePort;
+  ReceivePort? isolateReceivePort;
+  SendPort? sendPort;
+  late String path;
 
   FileWriter({
     required List<int> channels,
@@ -41,44 +39,34 @@ class FileWriter {
     } else {
       _labels = List<String>.generate(channels.length, (int i) => LABELS[i]);
     }
+
+    _path.then((String value) => path = value);
   }
 
-  Future<void> spawnNewIsolate() async {
-    try {
-      isolate = await Isolate.spawn(sayHello, receivePort.sendPort);
+  Future<void> init() async {
+    final completer = Completer<SendPort>();
+    receivePort = ReceivePort();
 
-      receivePort.listen((dynamic message) {
-        print('New message from Isolate: $message');
-      });
-    } catch (e) {
-      print("Error: $e");
-    }
-  }
-
-  static void myIsolate(SendPort isolateToMainStream) {
-    final mainToIsolateStream = ReceivePort();
-    isolateToMainStream.send(mainToIsolateStream.sendPort);
-
-    late IOSink sink;
-    mainToIsolateStream.listen((data) {
-      if (data is Frame) {
-        write(sink, data);
-      } else if (data is IOSink) {
-        sink = data;
-      } else {}
+    receivePort.listen((data) {
+      if (data is SendPort) {
+        completer.complete(data);
+      } else {
+        debugPrint('[isolateToMainStream] $data');
+        exit(0);
+      }
     });
 
-    isolateToMainStream.send('This is from myIsolate()');
+    isolate = await Isolate.spawn(myIsolate, receivePort.sendPort);
+    sendPort = await completer.future;
+    sendPort!.send(path);
+    sendPort!.send(metadata);
   }
 
-  static Future<void> _writeHeader(
-      IOSink sink, Map<String, dynamic> metadata) async {
-    //_headerWritten = true;
-    //file = File(
-    //"${(await getApplicationDocumentsDirectory()).path}/sense_${DateTime.now().millisecondsSinceEpoch}.csv");
-    //_sink = file.openWrite(mode: FileMode.append);
+  Future<String> get _path async =>
+      "${(await getApplicationDocumentsDirectory()).path}/sense_${start.millisecondsSinceEpoch}.csv";
 
-    /*final timestamp = start.toIso8601String();
+  Map<String, dynamic> get metadata {
+    final timestamp = start.toIso8601String();
 
     final metadata = {
       "Timestamp": timestamp,
@@ -95,8 +83,35 @@ class FileWriter {
               (int i) => RESOLUTIONS[i - 1],
             ),
           ),
-    };*/
+    };
+    return metadata;
+  }
 
+  static void myIsolate(SendPort isolateToMainStream) {
+    final mainToIsolateStream = ReceivePort();
+    isolateToMainStream.send(mainToIsolateStream.sendPort);
+
+    late File file;
+    late IOSink sink;
+    mainToIsolateStream.listen((data) {
+      if (data is Frame) {
+        _write(sink, data);
+      } else if (data is String) {
+        file = File(data);
+        sink = file.openWrite(mode: FileMode.append);
+      } else if (data is Map<String, dynamic>) {
+        _writeHeader(sink, data);
+      } else {
+        sink.close();
+        mainToIsolateStream.close();
+        isolateToMainStream.send(file);
+        exit(0);
+      }
+    });
+  }
+
+  static Future<void> _writeHeader(
+      IOSink sink, Map<String, dynamic> metadata) async {
     sink.write("# ${jsonEncode(metadata)}\n");
 
     sink.write("\n");
@@ -106,7 +121,7 @@ class FileWriter {
     sink.write("NSeq, I1, I2, O1, O2, ${labels.join(", ")}\n");
   }
 
-  static Future<void> write(IOSink sink, Frame frame) async {
+  static Future<void> _write(IOSink sink, Frame frame) async {
     //if (_writing) {
     //if (!_headerWritten) await _writeHeader();
     sink.write(
@@ -114,9 +129,14 @@ class FileWriter {
     //}
   }
 
-  File close() {
-    _writing = false;
-    _sink.close();
-    return file;
+  void write(Frame frame) {
+    sendPort?.send(frame);
+  }
+
+  void close() {
+    sendPort?.send(null);
+    receivePort.close();
+    isolate.kill();
+    //return file;
   }
 }

@@ -92,7 +92,6 @@ class _RecordingState extends State<Recording> {
           ),
         ),
       );
-      print(_time.length);
 
       if (settings.save) {
         fileWriter = FileWriter(
@@ -100,6 +99,7 @@ class _RecordingState extends State<Recording> {
           fs: settings.samplingRate,
           start: start,
         );
+        await fileWriter!.init();
       }
 
       await _sense.start(settings.samplingRate, settings.channels);
@@ -140,7 +140,7 @@ class _RecordingState extends State<Recording> {
         //debugPrint("${frames.first}");
         for (final frame in frames) {
           _data.add(frame.a.first);
-          await fileWriter!.write(frame);
+          fileWriter!.write(frame);
           if (_data.length > _time.length) {
             _data.removeAt(0);
             _time.removeAt(0);

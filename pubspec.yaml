@@ -25,9 +25,9 @@ dependencies:
   permission_handler: ^8.1.4+2
   provider: ^5.0.0
   scientisst_sense:
-    path: /home/robot/Documents/ScientISST/sense/apis/api-flutter
-    #git:
-      #url: https://github.com/scientisst/scientisst-sense-api-flutter
+    git:
+      url: https://github.com/scientisst/scientisst-sense-api-flutter
+    #path: /home/robot/Documents/ScientISST/sense/apis/api-flutter
   shared_preferences: ^2.0.6
   slider_button:
     git:
