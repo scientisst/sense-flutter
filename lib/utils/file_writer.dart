@@ -52,7 +52,6 @@ class FileWriter {
         completer.complete(data);
       } else {
         debugPrint('[isolateToMainStream] $data');
-        exit(0);
       }
     });
 
@@ -103,9 +102,7 @@ class FileWriter {
         _writeHeader(sink, data);
       } else {
         sink.close();
-        mainToIsolateStream.close();
-        isolateToMainStream.send(file);
-        exit(0);
+        Future.delayed(Duration.zero).then((_) => mainToIsolateStream.close());
       }
     });
   }

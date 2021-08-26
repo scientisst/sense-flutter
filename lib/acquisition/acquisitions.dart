@@ -1,11 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/acquisition/recording.dart';
-import 'package:sense/acquisition/review.dart';
 import 'package:sense/ui/my_button.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/utils.dart';

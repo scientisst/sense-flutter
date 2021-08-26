@@ -12,6 +12,7 @@ import 'package:slider_button/slider_button.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 const REFRESH_RATE = 20;
+const REFRESH_RATE_STATIC = 10;
 
 class Recording extends StatefulWidget {
   const Recording({Key? key}) : super(key: key);
@@ -111,7 +112,10 @@ class _RecordingState extends State<Recording> {
         _stream = _doNotSaveStream(numFrames);
       }
       _refresh = Timer.periodic(
-          const Duration(milliseconds: 1000 ~/ REFRESH_RATE), (Timer timer) {
+          Duration(
+            milliseconds:
+                1000 ~/ (settings.plot ? REFRESH_RATE : REFRESH_RATE_STATIC),
+          ), (Timer timer) {
         if (mounted) {
           setState(() {});
         } else {
@@ -165,7 +169,7 @@ class _RecordingState extends State<Recording> {
             child: ListBody(
               children: const <Widget>[
                 Text(
-                    'This might lead to loss of data. Do you want to proceed?'),
+                    'This might lead to loss of some data. Do you want to proceed?'),
               ],
             ),
           ),
@@ -222,7 +226,7 @@ class _RecordingState extends State<Recording> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      settings.plot ? "$duration" : "Recording",
+                      settings.plot ? "${duration ?? ""}" : "Recording",
                     ),
                   ],
                 )
@@ -292,7 +296,7 @@ class _RecordingState extends State<Recording> {
                             )
                           : Center(
                               child: Text(
-                                "$duration",
+                                "${duration ?? ""}",
                                 style: const TextStyle(
                                   fontSize: 28,
                                 ),
@@ -309,7 +313,7 @@ class _RecordingState extends State<Recording> {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) => SliderButton(
-                          //dismissible: true,
+                          dismissible: false,
                           width: constraints.maxWidth,
                           buttonColor: theme.accentColor,
                           backgroundColor: Colors.grey[200]!,
