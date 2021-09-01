@@ -25,7 +25,20 @@ class Chart extends StatelessWidget {
       defaultRenderer: LineRendererConfig(includeArea: false, strokeWidthPx: 3),
       animate: false,
       primaryMeasureAxis: const charts.NumericAxisSpec(
-        tickProviderSpec: NumericEndPointsTickProviderSpec(),
+        //tickProviderSpec: NumericEndPointsTickProviderSpec(),
+        tickProviderSpec: StaticNumericTickProviderSpec(
+          <TickSpec<num>>[
+            TickSpec<num>(0),
+            TickSpec<num>(512),
+            TickSpec<num>(1024),
+            TickSpec<num>(1536),
+            TickSpec<num>(2048),
+            TickSpec<num>(2560),
+            TickSpec<num>(3072),
+            TickSpec<num>(3584),
+            TickSpec<num>(4096),
+          ],
+        ),
         //renderSpec: NoneRenderSpec(),
         showAxisLine: true,
       ),
