@@ -192,14 +192,34 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                       ((100 + _devices[_devicesOrder[index]]!.rssi) / 50)
                           .clamp(0.0, 1.0);
                   final device = _devices[_devicesOrder[index]]!.device;
-                  return ListTile(
-                      leading: const Icon(Icons.bluetooth),
-                      title: Text(device.name ?? ""),
-                      subtitle: Text(device.address),
-                      trailing: SignalIcon(strength),
-                      onTap: () {
-                        setDevice(device.address, device.name);
-                      });
+                  bool connecting = false;
+                  return StatefulBuilder(
+                    builder: (BuildContext context, setState) {
+                      return ListTile(
+                        leading: const Icon(Icons.bluetooth),
+                        title: Text(device.name ?? ""),
+                        subtitle: Text(device.address),
+                        trailing: connecting
+                            ? SizedBox(
+                                width: 32,
+                                child: SpinKitDoubleBounce(
+                                  size: 24,
+                                  color: Theme.of(context).accentColor,
+                                ),
+                              )
+                            : SignalIcon(strength),
+                        onTap: () async {
+                          setState(() {
+                            connecting = true;
+                          });
+                          await setDevice(device.address, device.name);
+                          setState(() {
+                            connecting = false;
+                          });
+                        },
+                      );
+                    },
+                  );
                 },
               ),
             Align(

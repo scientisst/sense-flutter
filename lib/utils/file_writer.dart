@@ -39,11 +39,11 @@ class FileWriter {
     } else {
       _labels = List<String>.generate(channels.length, (int i) => LABELS[i]);
     }
-
-    _path.then((String value) => path = value);
   }
 
   Future<void> init() async {
+    path = await _path;
+
     final completer = Completer<SendPort>();
     receivePort = ReceivePort();
 

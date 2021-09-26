@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/acquisition/chart.dart';
+import 'package:sense/settings/device.dart';
 import 'package:sense/ui/my_button.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/file_writer.dart';
@@ -27,12 +28,13 @@ class _RecordingState extends State<Recording> {
   late DeviceSettings settings;
   bool starting = true;
   FileWriter? fileWriter;
-  final List<int?> _data = [];
+  final List<List<int?>> _data = [];
   final List<DateTime> _time = [];
-  int _windowInSeconds = 1;
+  int _windowInSeconds = 3;
   Timer? _refresh;
   late DateTime start;
   StreamSubscription? _stream;
+  late List<bool> _activeChannels;
 
   late Duration _step;
 
@@ -48,6 +50,12 @@ class _RecordingState extends State<Recording> {
       assert(settings.address != null);
 
       _sense = Sense(settings.address!);
+
+      _activeChannels = List.filled(settings.channels.length, true);
+      // add empty list to store data of each channel
+      settings.channels.forEach((_) {
+        _data.add(<int?>[]);
+      });
 
       if (settings.save && !(await Permission.storage.request().isGranted)) {
         Navigator.of(context).pop();
@@ -112,27 +120,30 @@ class _RecordingState extends State<Recording> {
         _stream = _doNotSaveStream(numFrames);
       }
       _refresh = Timer.periodic(
-          Duration(
-            milliseconds:
-                1000 ~/ (settings.plot ? REFRESH_RATE : REFRESH_RATE_STATIC),
-          ), (Timer timer) {
-        if (mounted) {
-          setState(() {});
-        } else {
-          timer.cancel();
-        }
-      });
+        Duration(
+          milliseconds:
+              1000 ~/ (settings.plot ? REFRESH_RATE : REFRESH_RATE_STATIC),
+        ),
+        (Timer timer) {
+          if (mounted) {
+            setState(() {});
+          } else {
+            timer.cancel();
+          }
+        },
+      );
     }
   }
 
   StreamSubscription _doNotSaveStream(int numFrames) => _sense
           .stream(numFrames: numFrames == 0 ? 1 : numFrames)
           .listen((List<Frame> frames) {
-        //debugPrint("${frames.first}");
         for (final frame in frames) {
-          _data.add(frame.a.first);
-          if (_data.length > _time.length) {
-            _data.removeAt(0);
+          for (int i = 0; i < settings.channels.length; i++) {
+            _data[i].add(frame.a[settings.channels[i] - 1]);
+          }
+          if (_data.first.length > _time.length) {
+            _data.forEach((list) => list.removeAt(0));
             _time.removeAt(0);
             _time.add(_time.last.add(_step));
           }
@@ -141,12 +152,13 @@ class _RecordingState extends State<Recording> {
 
   StreamSubscription _saveStream(int numFrames) =>
       _sense.stream().listen((List<Frame> frames) async {
-        //debugPrint("${frames.first}");
         for (final frame in frames) {
-          _data.add(frame.a.first);
+          for (int i = 0; i < settings.channels.length; i++) {
+            _data[i].add(frame.a[settings.channels[i] - 1]);
+          }
           fileWriter!.write(frame);
           if (_data.length > _time.length) {
-            _data.removeAt(0);
+            _data.forEach((list) => list.removeAt(0));
             _time.removeAt(0);
             _time.add(_time.last.add(_step));
           }
@@ -222,7 +234,6 @@ class _RecordingState extends State<Recording> {
                     const SpinKitPulse(
                       color: Color(0xFFFF0000),
                       size: 20,
-                      //duration: Duration(milliseconds: 250),
                     ),
                     const SizedBox(width: 16),
                     Text(
@@ -249,41 +260,59 @@ class _RecordingState extends State<Recording> {
                   children: [
                     Expanded(
                       child: settings.plot
-                          ? ListView(
-                              children: [
-                                Container(
+                          ? ListView.builder(
+                              itemCount: settings.channels.length,
+                              itemBuilder: (context, index) {
+                                final active = _activeChannels[index];
+                                return Container(
                                   margin: const EdgeInsets.all(8),
-                                  height: 300,
                                   child: Stack(
                                     children: [
-                                      Card(
-                                        elevation: 3,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 40,
-                                            left: 40,
-                                            bottom: 28,
-                                            right: 30,
+                                      if (active)
+                                        SizedBox(
+                                          height: 300,
+                                          child: Card(
+                                            elevation: 3,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 40,
+                                                left: 40,
+                                                bottom: 28,
+                                                right: 30,
+                                              ),
+                                              child: Chart(
+                                                _time,
+                                                _data[index],
+                                              ),
+                                            ),
                                           ),
-                                          child: Chart(_time, _data),
-                                        ),
-                                      ),
+                                        )
+                                      else
+                                        Container(),
                                       Align(
                                         alignment: Alignment.topCenter,
                                         child: MaterialButton(
-                                          color: Colors.blue,
+                                          color: active
+                                              ? theme.accentColor
+                                              : theme.disabledColor,
                                           shape: const CircleBorder(),
                                           elevation: 3,
                                           materialTapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
-                                          onPressed: () {},
-                                          child: const Text(
-                                            "AI1",
-                                            style: TextStyle(
+                                          onPressed: () {
+                                            setState(() {
+                                              _activeChannels[index] =
+                                                  !_activeChannels[index];
+                                            });
+                                          },
+                                          child: Text(
+                                            CHANNELS[
+                                                settings.channels[index] - 1],
+                                            style: const TextStyle(
                                               color: Colors.white,
                                             ),
                                           ),
@@ -291,8 +320,8 @@ class _RecordingState extends State<Recording> {
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             )
                           : Center(
                               child: Text(
