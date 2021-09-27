@@ -29,6 +29,10 @@ class MyApp extends StatelessWidget {
         primaryColor: MyColors.grey,
         accentColor: MyColors.brown,
         scaffoldBackgroundColor: const Color(0xFFFEFEFE),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: MyColors.grey,
+          centerTitle: true,
+        ),
         primaryIconTheme: const IconThemeData(
           color: MyColors.orange,
         ),
@@ -58,6 +62,11 @@ class MyApp extends StatelessWidget {
           primaryColorDark: MyColors.lightGrey,
           primaryColorLight: MyColors.grey,
           valueIndicatorTextStyle: const TextStyle(),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            primary: MyColors.orange,
+          ),
         ),
       ),
       home: const Scaffold(

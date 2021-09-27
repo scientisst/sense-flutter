@@ -79,7 +79,6 @@ class _DeviceState extends State<Device> {
     );
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
         title: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

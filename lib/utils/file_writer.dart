@@ -20,7 +20,7 @@ class FileWriter {
   late ReceivePort receivePort;
   ReceivePort? isolateReceivePort;
   SendPort? sendPort;
-  late String path;
+  String? path;
 
   FileWriter({
     required List<int> channels,
@@ -128,6 +128,11 @@ class FileWriter {
 
   void write(Frame frame) {
     sendPort?.send(frame);
+  }
+
+  Future<double?> fileSize() async {
+    if (path == null) return null;
+    return (await File(path!).length()) / 1024;
   }
 
   void close() {

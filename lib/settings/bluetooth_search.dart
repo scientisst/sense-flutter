@@ -169,7 +169,6 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Select a device"),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Stack(

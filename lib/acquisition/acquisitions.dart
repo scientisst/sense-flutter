@@ -7,6 +7,7 @@ import 'package:sense/ui/my_button.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/utils.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
 
 class Acquisitions extends StatefulWidget {
   const Acquisitions({Key? key}) : super(key: key);
@@ -23,7 +24,6 @@ class _AcquisitionsState extends State<Acquisitions> {
         title: const Text(
           "Acquisitions",
         ),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Stack(
@@ -58,6 +58,7 @@ class _AcquisitionsState extends State<Acquisitions> {
                         subtitle: Text(filename),
                         leading: const Icon(Icons.stacked_line_chart_rounded),
                         onTap: () => OpenFile.open(path),
+                        onLongPress: () => Share.shareFiles([path]),
                         /*onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => Review(path),

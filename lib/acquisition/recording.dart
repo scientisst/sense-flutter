@@ -11,6 +11,8 @@ import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/file_writer.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:disk_space/disk_space.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 const REFRESH_RATE = 20;
 const REFRESH_RATE_STATIC = 10;
@@ -35,6 +37,9 @@ class _RecordingState extends State<Recording> {
   late DateTime start;
   StreamSubscription? _stream;
   late List<bool> _activeChannels;
+  Timer? _refreshSize;
+  double _diskSpace = 0;
+  double _fileSize = 0;
 
   late Duration _step;
 
@@ -77,6 +82,13 @@ class _RecordingState extends State<Recording> {
     try {
       await _sense.connect(onDisconnect: () {
         //TODO: handle disconnect during acquisition
+        Fluttertoast.showToast(
+          msg: "Connection Lost",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          //textColor: Colors.white,
+          //fontSize: 16.0,
+        );
         if (mounted) setState(() {});
       });
     } on SenseException catch (e) {
@@ -119,6 +131,7 @@ class _RecordingState extends State<Recording> {
       } else {
         _stream = _doNotSaveStream(numFrames);
       }
+
       _refresh = Timer.periodic(
         Duration(
           milliseconds:
@@ -127,6 +140,20 @@ class _RecordingState extends State<Recording> {
         (Timer timer) {
           if (mounted) {
             setState(() {});
+          } else {
+            timer.cancel();
+          }
+        },
+      );
+
+      _refreshSize = Timer.periodic(
+        const Duration(
+          seconds: 1,
+        ),
+        (Timer timer) async {
+          if (mounted) {
+            _fileSize = (await fileWriter?.fileSize()) ?? 0;
+            _diskSpace = (await DiskSpace.getFreeDiskSpace) ?? 0;
           } else {
             timer.cancel();
           }
@@ -157,7 +184,7 @@ class _RecordingState extends State<Recording> {
             _data[i].add(frame.a[settings.channels[i] - 1]);
           }
           fileWriter!.write(frame);
-          if (_data.length > _time.length) {
+          if (_data.first.length > _time.length) {
             _data.forEach((list) => list.removeAt(0));
             _time.removeAt(0);
             _time.add(_time.last.add(_step));
@@ -167,7 +194,6 @@ class _RecordingState extends State<Recording> {
 
   Future<void> _stopAcquisition() async {
     await _sense.stop();
-
     Navigator.of(context).pop();
   }
 
@@ -211,6 +237,7 @@ class _RecordingState extends State<Recording> {
   void dispose() {
     if (!starting) {
       _refresh?.cancel();
+      _refreshSize?.cancel();
       _sense.disconnect();
       _stream?.cancel();
       fileWriter?.close();
@@ -226,7 +253,6 @@ class _RecordingState extends State<Recording> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          centerTitle: true,
           title: _sense.acquiring
               ? Row(
                   mainAxisSize: MainAxisSize.min,
@@ -323,13 +349,31 @@ class _RecordingState extends State<Recording> {
                                 );
                               },
                             )
-                          : Center(
-                              child: Text(
-                                "${duration ?? ""}",
-                                style: const TextStyle(
-                                  fontSize: 28,
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: Text(
+                                    "${duration ?? ""}",
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(
+                                  height: 32,
+                                ),
+                                Center(
+                                  child: Text(
+                                    "File Size: ${_fileSize.toStringAsFixed(1)} MB",
+                                  ),
+                                ),
+                                Center(
+                                  child: Text(
+                                    "Free Space: ${_diskSpace.toStringAsFixed(1)} MB",
+                                  ),
+                                ),
+                              ],
                             ),
                     ),
                     Container(
@@ -342,9 +386,9 @@ class _RecordingState extends State<Recording> {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) => SliderButton(
-                          dismissible: false,
                           width: constraints.maxWidth,
                           buttonColor: theme.accentColor,
+                          dismissible: false,
                           backgroundColor: Colors.grey[200]!,
                           action: _stopAcquisition,
                           label: const Text(
