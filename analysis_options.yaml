@@ -1,1 +1,13 @@
 include: package:lint/analysis_options.yaml
+
+linter:
+  rules:
+    # ------ Disable individual rules ----- #
+    #                 ---                   #
+    # Turn off what you don't like.         #
+    # ------------------------------------- #
+
+    # Use parameter order as in json response
+    constant_identifier_names: false
+    avoid_function_literals_in_foreach_calls: false
+

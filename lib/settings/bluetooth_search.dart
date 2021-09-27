@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/ui/my_button.dart';
-import 'package:sense/utils/address.dart';
+import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/shared_pref.dart';
+import 'package:bluetooth_enable/bluetooth_enable.dart';
 
 class BluetoothSearch extends StatefulWidget {
   const BluetoothSearch({Key? key}) : super(key: key);
@@ -18,13 +21,20 @@ class BluetoothSearch extends StatefulWidget {
 class _BluetoothSearchState extends State<BluetoothSearch> {
   final Map<String, BluetoothDiscoveryResult> _devices = {};
   final List<String> _devicesOrder = [];
-  bool _searching = true;
+  bool _searching = false;
   StreamSubscription? _subscription;
+  late DeviceSettings settings;
 
   @override
   void initState() {
     super.initState();
     _searchDevices();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    settings = Provider.of<DeviceSettings>(context);
   }
 
   @override
@@ -34,7 +44,71 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     super.dispose();
   }
 
+  Future<bool?> showBluetoothDialog() async {
+    final result = await showDialog<bool?>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Turn on Bluetooth'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: const <Widget>[
+              Text('You need to turn on Bluetooth on your device.'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop(true);
+              //await AppSettings.openBluetoothSettings();
+            },
+            child: const Text('Go to Settings'),
+          ),
+        ],
+      ),
+    );
+    return result;
+  }
+
+  Future<bool> _checkBluetooth() async {
+    if (!(await FlutterBluetoothSerial.instance.isEnabled ?? false)) {
+      if (Platform.isAndroid) {
+        // Request to turn on Bluetooth within an app
+        BluetoothEnable.enableBluetooth.then((result) {
+          return result == "true";
+        });
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<bool> _checkLocation() async {
+    final location = Location();
+    if (!await location.serviceEnabled()) {
+      if (!await location.requestService()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Future<void> _searchDevices() async {
+    final bluetoothEnabled = await _checkBluetooth();
+    final locationEnabled = await _checkLocation();
+    if (!bluetoothEnabled || !locationEnabled) {
+      debugPrint("Something went wrong");
+      // TODO: show error dialog
+      return;
+    }
+
     setState(() {
       _searching = true;
     });
@@ -43,9 +117,8 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     _devicesOrder.clear();
     _subscription = FlutterBluetoothSerial.instance.startDiscovery().listen(
       (result) {
-        if (result.device?.name?.toLowerCase().contains("scientisst") ??
-            false) {
-          final address = result.device!.address!;
+        if (result.device.name?.toLowerCase().contains("scientisst") ?? false) {
+          final address = result.device.address;
           if (_devices.isEmpty) {
             _devicesOrder.add(address);
           } else {
@@ -66,17 +139,28 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     );
     Future.delayed(const Duration(seconds: 5)).then((_) {
       _searching = false;
+      _subscription?.cancel();
+      FlutterBluetoothSerial.instance.cancelDiscovery();
       if (mounted) {
-        _subscription?.cancel();
-        FlutterBluetoothSerial.instance.cancelDiscovery();
         setState(() {});
       }
     });
   }
 
-  Future<void> setDevice(String address) async {
-    Provider.of<Address>(context, listen: false).setAddress(address);
-    await SharedPref.write("address", address);
+  Future<void> setDevice(String address, String? name) async {
+    final paired =
+        (await FlutterBluetoothSerial.instance.getBondStateForAddress(address))
+                .isBonded ||
+            ((await FlutterBluetoothSerial.instance
+                    .bondDeviceAtAddress(address, passkeyConfirm: true)) ??
+                false);
+
+    if (paired) {
+      settings.name = name;
+      settings.address = address;
+      await SharedPref.write("address", address);
+      await SharedPref.write("name", name);
+    }
   }
 
   @override
@@ -85,7 +169,6 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Select a device"),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Stack(
@@ -107,15 +190,35 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                   final strength =
                       ((100 + _devices[_devicesOrder[index]]!.rssi) / 50)
                           .clamp(0.0, 1.0);
-                  final device = _devices[_devicesOrder[index]]!.device!;
-                  return ListTile(
-                      leading: const Icon(Icons.bluetooth),
-                      title: Text(device.name ?? ""),
-                      subtitle: Text(device.address!),
-                      trailing: SignalIcon(strength),
-                      onTap: () {
-                        setDevice(device.address!);
-                      });
+                  final device = _devices[_devicesOrder[index]]!.device;
+                  bool connecting = false;
+                  return StatefulBuilder(
+                    builder: (BuildContext context, setState) {
+                      return ListTile(
+                        leading: const Icon(Icons.bluetooth),
+                        title: Text(device.name ?? ""),
+                        subtitle: Text(device.address),
+                        trailing: connecting
+                            ? SizedBox(
+                                width: 32,
+                                child: SpinKitDoubleBounce(
+                                  size: 24,
+                                  color: Theme.of(context).accentColor,
+                                ),
+                              )
+                            : SignalIcon(strength),
+                        onTap: () async {
+                          setState(() {
+                            connecting = true;
+                          });
+                          await setDevice(device.address, device.name);
+                          setState(() {
+                            connecting = false;
+                          });
+                        },
+                      );
+                    },
+                  );
                 },
               ),
             Align(
