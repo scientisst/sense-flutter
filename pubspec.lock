@@ -9,12 +9,12 @@ packages:
     source: hosted
     version: "3.1.2"
   args:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: args
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.1.1"
+    version: "2.3.0"
   async:
     dependency: transitive
     description:
@@ -134,6 +134,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  flutter_launcher_icons:
+    dependency: "direct dev"
+    description:
+      path: "."
+      ref: scaling
+      resolved-ref: b24ef959f19071fdc94013f32bab79ce9284bb58
+      url: "https://github.com/knyghtryda/flutter_launcher_icons"
+    source: git
+    version: "0.8.1"
   flutter_native_splash:
     dependency: "direct dev"
     description:
@@ -173,12 +182,12 @@ packages:
     source: hosted
     version: "4.0.0"
   image:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: image
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.2"
+    version: "3.0.5"
   intl:
     dependency: "direct main"
     description:
@@ -623,7 +632,7 @@ packages:
     source: hosted
     version: "5.1.2"
   yaml:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: yaml
       url: "https://pub.dartlang.org"
