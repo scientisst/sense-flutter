@@ -40,6 +40,7 @@ class _RecordingState extends State<Recording> {
   Timer? _refreshSize;
   double _diskSpace = 0;
   double _fileSize = 0;
+  bool _stopping = false;
 
   late Duration _step;
 
@@ -82,13 +83,15 @@ class _RecordingState extends State<Recording> {
     try {
       await _sense.connect(onDisconnect: () {
         //TODO: handle disconnect during acquisition
-        Fluttertoast.showToast(
-          msg: "Connection Lost",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          //textColor: Colors.white,
-          //fontSize: 16.0,
-        );
+        if (_stopping) {
+          Fluttertoast.showToast(
+            msg: "Connection Lost",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            //textColor: Colors.white,
+            //fontSize: 16.0,
+          );
+        }
         if (mounted) setState(() {});
       });
     } on SenseException catch (e) {
@@ -193,6 +196,7 @@ class _RecordingState extends State<Recording> {
       });
 
   Future<void> _stopAcquisition() async {
+    _stopping = true;
     await _sense.stop();
     Navigator.of(context).pop();
   }

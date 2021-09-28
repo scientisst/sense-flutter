@@ -28,7 +28,6 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   @override
   void initState() {
     super.initState();
-    _searchDevices();
   }
 
   @override
