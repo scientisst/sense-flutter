@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/colors.dart';
 import 'package:sense/utils/device_settings.dart';
@@ -66,6 +67,20 @@ class _DeviceState extends State<Device> {
     await SharedPref.write("channels", settings.channels);
   }
 
+  _setPlotState(bool value) async {
+    setState(() {
+      settings.plot = value;
+    });
+    await SharedPref.write("plot", value);
+  }
+
+  _setSaveState(bool value) async {
+    setState(() {
+      settings.save = value;
+    });
+    await SharedPref.write("save", value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -78,27 +93,7 @@ class _DeviceState extends State<Device> {
       child: const Text("-"),
     );
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (settings.name != null)
-              Text(
-                settings.name!,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            Text(
-              settings.address!,
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-        actions: [
+      /*actions: [
           SizedBox(
             height: 48,
             width: 48,
@@ -111,36 +106,90 @@ class _DeviceState extends State<Device> {
               ),
             ),
           ),
-        ],
-      ),
+        ],*/
       body: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(
             left: 8,
             right: 8,
-            bottom: 80,
+            bottom: 20,
           ),
           children: [
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (settings.name != null)
+                        Text(
+                          settings.name!,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      Text(
+                        settings.address!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: 48,
+                  width: 48,
+                  child: IconButton(
+                    onPressed: () {
+                      _forget();
+                    },
+                    icon: const Icon(
+                      Icons.highlight_remove,
+                    ),
+                    iconSize: 32,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ],
+            ),
             SwitchListTile(
               title: const Text("Plot signals"),
               subtitle: const Text("Might affect performance"),
               value: settings.plot,
               onChanged: (value) async {
-                setState(() {
-                  settings.plot = value;
-                });
-                await SharedPref.write("plot", value);
+                if (!value && !settings.save) {
+                  Fluttertoast.showToast(
+                    msg: "You must select one of the options.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                  );
+
+                  _setPlotState(false);
+                  _setSaveState(true);
+                } else {
+                  _setPlotState(value);
+                }
               },
             ),
             SwitchListTile(
               title: const Text("Save file"),
               value: settings.save,
               onChanged: (value) async {
-                setState(() {
-                  settings.save = value;
-                });
-                await SharedPref.write("save", value);
+                if (!value && !settings.plot) {
+                  Fluttertoast.showToast(
+                    msg: "You must select one of the options.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.CENTER,
+                  );
+
+                  _setSaveState(false);
+                  _setPlotState(true);
+                } else {
+                  _setSaveState(value);
+                }
               },
             ),
             const Center(
@@ -308,7 +357,8 @@ class _DeviceState extends State<Device> {
         _updateChannels();
       },
       style: ElevatedButton.styleFrom(
-        primary: _channels[index] ? MyColors.brown : Colors.grey[300],
+        primary:
+            _channels[index] ? Theme.of(context).accentColor : Colors.grey[300],
       ),
       child: Text(
         CHANNELS[index],

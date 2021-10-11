@@ -95,7 +95,7 @@ class FileWriter {
     late IOSink sink;
     late List<int> channels;
     mainToIsolateStream.listen((data) {
-      if (data is Frame) {
+      if (data is List<Frame>) {
         _write(sink, data, channels);
       } else if (data is String) {
         file = File(data);
@@ -122,12 +122,15 @@ class FileWriter {
   }
 
   static Future<void> _write(
-      IOSink sink, Frame frame, List<int> channels) async {
-    sink.write(
-        "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${channels.map((int channel) => frame.a[channel]).join(", ")}\n");
+      IOSink sink, List<Frame> frames, List<int> channels) async {
+    final chunk = frames
+        .map((frame) =>
+            "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${channels.map((int channel) => frame.a[channel]).join(", ")}\n")
+        .join();
+    sink.write(chunk);
   }
 
-  void write(Frame frame) {
+  void write(List<Frame> frame) {
     sendPort?.send(frame);
   }
 

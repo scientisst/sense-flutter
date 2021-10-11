@@ -166,9 +166,6 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Select a device"),
-      ),
       body: SafeArea(
         child: Stack(
           children: [
@@ -183,6 +180,8 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
               const _EmptyDevices()
             else
               ListView.separated(
+                padding: const EdgeInsets.only(top: 10),
+                physics: const BouncingScrollPhysics(),
                 separatorBuilder: (context, index) => const Divider(),
                 itemCount: _devicesOrder.length,
                 itemBuilder: (context, index) {

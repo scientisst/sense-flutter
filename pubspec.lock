@@ -9,7 +9,7 @@ packages:
     source: hosted
     version: "3.1.2"
   args:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: args
       url: "https://pub.dartlang.org"
@@ -127,6 +127,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.0"
+  flutter_custom_clippers:
+    dependency: "direct main"
+    description:
+      name: flutter_custom_clippers
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   flutter_isolate:
     dependency: "direct main"
     description:
@@ -134,15 +141,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
-  flutter_launcher_icons:
-    dependency: "direct dev"
-    description:
-      path: "."
-      ref: scaling
-      resolved-ref: b24ef959f19071fdc94013f32bab79ce9284bb58
-      url: "https://github.com/knyghtryda/flutter_launcher_icons"
-    source: git
-    version: "0.8.1"
   flutter_native_splash:
     dependency: "direct dev"
     description:
@@ -182,7 +180,7 @@ packages:
     source: hosted
     version: "4.0.0"
   image:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: image
       url: "https://pub.dartlang.org"
@@ -667,7 +665,7 @@ packages:
     source: hosted
     version: "5.1.2"
   yaml:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: yaml
       url: "https://pub.dartlang.org"

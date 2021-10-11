@@ -14,7 +14,7 @@ class Chart extends StatelessWidget {
     final _series = [
       charts.Series<int, DateTime>(
         id: 'Values',
-        colorFn: (_, __) => charts.Color.fromHex(code: "#726657"),
+        colorFn: (_, __) => charts.Color.fromHex(code: "#EF4B59"),
         domainFn: (int index, _) => x[index],
         measureFn: (int index, _) => (index < y.length) ? y[index] : null,
         data: List.generate(x.length, (index) => index),

@@ -14,8 +14,12 @@ class Settings extends StatefulWidget {
   _SettingsState createState() => _SettingsState();
 }
 
-class _SettingsState extends State<Settings> {
+class _SettingsState extends State<Settings>
+    with AutomaticKeepAliveClientMixin {
   final _loadingSettings = Completer<DeviceSettings>();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {

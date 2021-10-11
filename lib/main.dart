@@ -20,52 +20,64 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: MyColors.grey,
+      statusBarColor: MyColors.primary,
     ));
     return MaterialApp(
       title: 'Sense',
       theme: ThemeData(
         disabledColor: MyColors.lightGrey,
-        primaryColor: MyColors.grey,
-        accentColor: MyColors.brown,
+        primaryColor: MyColors.primary,
+        accentColor: MyColors.primary,
         scaffoldBackgroundColor: const Color(0xFFFEFEFE),
         appBarTheme: const AppBarTheme(
-          backgroundColor: MyColors.grey,
+          backgroundColor: MyColors.primary,
           centerTitle: true,
         ),
         primaryIconTheme: const IconThemeData(
-          color: MyColors.orange,
+          color: Colors.white,
         ),
         iconTheme: const IconThemeData(
-          color: MyColors.orange,
-        ),
+            //color: Colors.white,
+            ),
         accentIconTheme: const IconThemeData(
-          color: MyColors.orange,
+          color: MyColors.primary,
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           unselectedItemColor: MyColors.lightGrey,
-          selectedItemColor: MyColors.grey,
+          selectedItemColor: MyColors.primary,
         ),
-        buttonTheme: const ButtonThemeData(buttonColor: MyColors.brown),
+        buttonTheme: const ButtonThemeData(buttonColor: MyColors.primary),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            //primary: MyColors.brown,
+            primary: MyColors.primary,
             //onPrimary: Colors.grey[1000],
             //onSurface: Colors.grey[1000],
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(100),
             ), //alignment: Alignment.center,
           ),
         ),
         sliderTheme: SliderThemeData.fromPrimaryColors(
-          primaryColor: MyColors.brown,
+          primaryColor: MyColors.primary,
           primaryColorDark: MyColors.lightGrey,
-          primaryColorLight: MyColors.grey,
+          primaryColorLight: MyColors.primary,
           valueIndicatorTextStyle: const TextStyle(),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            primary: MyColors.orange,
+            primary: MyColors.primary,
+          ),
+        ),
+        tabBarTheme: const TabBarTheme(
+          labelColor: MyColors.primary,
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(
+              color: MyColors.primary,
+              width: 4.0,
+            ),
+            insets: EdgeInsets.only(
+              bottom: 48,
+            ),
           ),
         ),
       ),

@@ -29,8 +29,8 @@ class MyButton extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        height: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             stops: [0, 0.8],
@@ -46,7 +46,7 @@ class MyButton extends StatelessWidget {
           onPressed: active ? onPressed : () {},
           style: ElevatedButton.styleFrom(
             primary: active
-                ? color ?? Theme.of(context).primaryColor
+                ? color ?? Theme.of(context).accentColor
                 : Colors.grey[300],
           ),
           child: Container(
