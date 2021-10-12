@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
-import 'package:sense/colors.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/shared_pref.dart';
 

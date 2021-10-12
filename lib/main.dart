@@ -47,6 +47,19 @@ class MyApp extends StatelessWidget {
           selectedItemColor: MyColors.primary,
         ),
         buttonTheme: const ButtonThemeData(buttonColor: MyColors.primary),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            primary: MyColors.primary,
+            elevation: 0,
+            side: const BorderSide(
+              color: MyColors.primary,
+              width: 2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(100),
+            ),
+          ),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             primary: MyColors.primary,
@@ -66,6 +79,21 @@ class MyApp extends StatelessWidget {
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             primary: MyColors.primary,
+          ),
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: MyColors.primary,
+            ),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: MyColors.primary,
+            ),
+          ),
+          hintStyle: TextStyle(
+            color: Colors.black54,
           ),
         ),
         tabBarTheme: const TabBarTheme(

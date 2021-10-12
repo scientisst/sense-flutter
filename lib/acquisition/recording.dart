@@ -8,6 +8,7 @@ import 'package:sense/acquisition/chart.dart';
 import 'package:sense/settings/device.dart';
 import 'package:sense/ui/my_button.dart';
 import 'package:sense/ui/my_topbar.dart';
+import 'package:sense/ui/widget_dialog.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/file_writer.dart';
 import 'package:slider_button/slider_button.dart';
@@ -224,31 +225,36 @@ class _RecordingState extends State<Recording> {
     if (_sense.acquiring) {
       final result = await showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Exit the acquisition'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: const <Widget>[
-                Text(
-                    'This might lead to loss of some data. Do you want to proceed?'),
-              ],
-            ),
+        builder: (context) => WidgetDialog(
+          icon: const Icon(Icons.warning),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                  "Do you want to exit? This might lead to loss of some data."),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _stopping = true;
+                      Navigator.of(context).pop(true);
+                    },
+                    style: TextButton.styleFrom(
+                      primary: Colors.grey,
+                    ),
+                    child: const Text('Exit'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _stopping = true;
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('Exit'),
-            ),
-          ],
         ),
       ) as bool?;
       return result ?? false;
@@ -258,10 +264,12 @@ class _RecordingState extends State<Recording> {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     if (!starting) {
+      _stopping = true;
       _refresh?.cancel();
       _refreshSize?.cancel();
+      _stopAcquisition();
       _sense.disconnect();
       _stream?.cancel();
       fileWriter?.close();
@@ -292,6 +300,18 @@ class _RecordingState extends State<Recording> {
             child: Align(
               alignment: Alignment.topCenter,
               child: MyTopBar(
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                    ),
+                    iconSize: 28,
+                    onPressed: () async {
+                      if (await _onWillPop()) Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 child: topChild,
               ),
             ),
@@ -437,7 +457,7 @@ class _RecordingState extends State<Recording> {
                   mainAxisSize: MainAxisSize.min,
                   children: const [
                     SpinKitPulse(
-                      color: Color(0xFFFF0000),
+                      color: Color(0xFFFFFFFF),
                       size: 20,
                     ),
                     SizedBox(width: 16),

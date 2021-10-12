@@ -1,15 +1,20 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/ui/my_button.dart';
+import 'package:sense/ui/widget_dialog.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/shared_pref.dart';
 import 'package:bluetooth_enable/bluetooth_enable.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:sense/utils/utils.dart';
 
 class BluetoothSearch extends StatefulWidget {
   const BluetoothSearch({Key? key}) : super(key: key);
@@ -24,6 +29,13 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   bool _searching = false;
   StreamSubscription? _subscription;
   late DeviceSettings settings;
+  final _maskFormatter = MaskTextInputFormatter(
+    mask: "##:##:##:##:##:##",
+    filter: {
+      "#": RegExp("[a-fA-F0-9]"),
+    },
+  );
+  final _controller = TextEditingController(text: "");
 
   @override
   void initState() {
@@ -146,85 +158,98 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     });
   }
 
-  Future<void> setDevice(String address, String? name) async {
+  Future<void> setDevice(String address, [String? name]) async {
     final paired =
         (await FlutterBluetoothSerial.instance.getBondStateForAddress(address))
                 .isBonded ||
             ((await FlutterBluetoothSerial.instance
-                    .bondDeviceAtAddress(address, passkeyConfirm: true)) ??
+                    .bondDeviceAtAddress(address, passkeyConfirm: true)
+                    .timeout(
+                      const Duration(seconds: 10),
+                      onTimeout: () => false,
+                    )) ??
                 false);
 
     if (paired) {
-      settings.name = name;
+      String? _name = name;
+      if (_name == null) {
+        final devices =
+            (await FlutterBluetoothSerial.instance.getBondedDevices()).where(
+          (device) => device.address == address,
+        );
+        if (devices.isNotEmpty) _name = devices.first.name;
+      }
+      settings.name = _name;
       settings.address = address;
       await SharedPref.write("address", address);
-      await SharedPref.write("name", name);
+      await SharedPref.write("name", _name);
+    } else {
+      Fluttertoast.showToast(
+        msg: "Failed to connect",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).primaryColor;
     return Scaffold(
       body: SafeArea(
         child: Stack(
           children: [
-            if (_searching && _devices.isEmpty)
-              Center(
-                child: SpinKitRipple(
-                  color: primaryColor,
-                  size: 128,
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 12, 4),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Devices found:",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.add_circle_outline,
+                        ),
+                        iconSize: 32,
+                        color: Theme.of(context).primaryColor,
+                        onPressed: _addDeviceDialog,
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            else if (_devices.isEmpty)
-              const _EmptyDevices()
-            else
-              ListView.separated(
-                padding: const EdgeInsets.only(top: 10),
-                physics: const BouncingScrollPhysics(),
-                separatorBuilder: (context, index) => const Divider(),
-                itemCount: _devicesOrder.length,
-                itemBuilder: (context, index) {
-                  final strength =
-                      ((100 + _devices[_devicesOrder[index]]!.rssi) / 50)
-                          .clamp(0.0, 1.0);
-                  final device = _devices[_devicesOrder[index]]!.device;
-                  bool connecting = false;
-                  return StatefulBuilder(
-                    builder: (BuildContext context, setState) {
-                      return ListTile(
-                        leading: const Icon(Icons.bluetooth),
-                        title: Text(device.name ?? ""),
-                        subtitle: Text(device.address),
-                        trailing: connecting
-                            ? SizedBox(
-                                width: 32,
-                                child: SpinKitDoubleBounce(
-                                  size: 24,
-                                  color: Theme.of(context).accentColor,
-                                ),
-                              )
-                            : SignalIcon(strength),
-                        onTap: () async {
-                          setState(() {
-                            connecting = true;
-                          });
-                          await setDevice(device.address, device.name);
-                          setState(() {
-                            connecting = false;
-                          });
-                        },
-                      );
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      if (_searching && _devices.isEmpty) {
+                        return Center(
+                          child: SpinKitRipple(
+                            color: Theme.of(context).primaryColor,
+                            size: 128,
+                          ),
+                        );
+                      } else if (_devices.isEmpty) {
+                        return const _EmptyDevices();
+                      } else {
+                        return _buildDevices();
+                      }
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
+            ),
             Align(
               alignment: Alignment.bottomCenter,
               child: MyButton(
                 text: "Search",
                 inactiveWidget: SpinKitThreeBounce(
-                  color: primaryColor,
+                  color: Theme.of(context).primaryColor,
                   size: 16,
                 ),
                 onPressed: _searchDevices,
@@ -236,6 +261,128 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
       ),
     );
   }
+
+  void _addDeviceDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final String? address = await showDialog(
+      context: context,
+      builder: (context) => WidgetDialog(
+        icon: const Icon(
+          Icons.bluetooth_rounded,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Manually add a device:",
+              style: TextStyle(
+                color: Colors.black54,
+              ),
+            ),
+            SizedBox(
+              width: 140,
+              child: Form(
+                key: formKey,
+                child: TextFormField(
+                  autofocus: true,
+                  inputFormatters: [
+                    _maskFormatter,
+                    UpperCaseTextFormatter(),
+                  ],
+                  style: const TextStyle(
+                    fontFeatures: [
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
+                  controller: _controller,
+                  keyboardType: TextInputType.visiblePassword,
+                  decoration: InputDecoration(
+                    hintText: "AA:BB:CC:DD:EE:FF",
+                    hintStyle: Theme.of(context)
+                        .inputDecorationTheme
+                        .hintStyle
+                        ?.copyWith(
+                      fontFeatures: [
+                        const FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
+                  validator: (String? address) {
+                    if (!_maskFormatter.isFill()) {
+                      return "Invalid MAC address";
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.of(context)
+                        .pop(_maskFormatter.getMaskedText().toUpperCase());
+                  }
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text("Connect"),
+                    Icon(Icons.arrow_right_rounded),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (address != null) {
+      setDevice(address);
+    }
+  }
+
+  Widget _buildDevices() => ListView.separated(
+        //padding: const EdgeInsets.only(top: 10),
+        physics: const BouncingScrollPhysics(),
+        separatorBuilder: (context, index) => const Divider(),
+        itemCount: _devicesOrder.length,
+        itemBuilder: (context, index) {
+          final strength = ((100 + _devices[_devicesOrder[index]]!.rssi) / 50)
+              .clamp(0.0, 1.0);
+          final device = _devices[_devicesOrder[index]]!.device;
+          bool connecting = false;
+          return StatefulBuilder(
+            builder: (BuildContext context, setState) {
+              return ListTile(
+                leading: const Icon(Icons.bluetooth),
+                title: Text(device.name ?? ""),
+                subtitle: Text(device.address),
+                trailing: connecting
+                    ? SizedBox(
+                        width: 32,
+                        child: SpinKitDoubleBounce(
+                          size: 24,
+                          color: Theme.of(context).accentColor,
+                        ),
+                      )
+                    : SignalIcon(strength),
+                onTap: () async {
+                  setState(() {
+                    connecting = true;
+                  });
+                  await setDevice(device.address, device.name);
+                  setState(() {
+                    connecting = false;
+                  });
+                },
+              );
+            },
+          );
+        },
+      );
 }
 
 class SignalIcon extends StatelessWidget {

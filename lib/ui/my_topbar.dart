@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 class MyTopBar extends StatelessWidget implements PreferredSizeWidget {
-  const MyTopBar({required this.child, Key? key}) : super(key: key);
+  const MyTopBar({required this.child, this.actions, Key? key})
+      : super(key: key);
 
   final Widget child;
+  final List<Widget>? actions;
 
   @override
   Size get preferredSize => const Size.fromHeight(100.0);
@@ -14,7 +16,9 @@ class MyTopBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       title: child,
+      actions: actions,
       centerTitle: true,
+      automaticallyImplyLeading: false,
       flexibleSpace: ClipPath(
         clipper: MyClipper(),
         child: Container(

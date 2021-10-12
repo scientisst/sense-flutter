@@ -29,7 +29,7 @@ class MyButton extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: 80,
+        constraints: const BoxConstraints(maxHeight: 80),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
