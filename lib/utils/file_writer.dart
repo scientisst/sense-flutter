@@ -125,7 +125,7 @@ class FileWriter {
       IOSink sink, List<Frame> frames, List<int> channels) async {
     final chunk = frames
         .map((frame) =>
-            "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${channels.map((int channel) => frame.a[channel]).join(", ")}\n")
+            "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${channels.map((int channel) => frame.a[channel - 1]).join(", ")}\n")
         .join();
     sink.write(chunk);
   }
