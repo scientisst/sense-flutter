@@ -75,6 +75,7 @@ class FileWriter {
           (int i) => LABELS[i - 1],
         ),
       ),
+      "Channels indexes": _channels,
       "Labels": _labels,
       "Resolution (bits)": [4, 1, 1, 1, 1] +
           List<int>.from(
@@ -92,13 +93,15 @@ class FileWriter {
 
     late File file;
     late IOSink sink;
+    late List<int> channels;
     mainToIsolateStream.listen((data) {
-      if (data is Frame) {
-        _write(sink, data);
+      if (data is List<Frame>) {
+        _write(sink, data, channels);
       } else if (data is String) {
         file = File(data);
         sink = file.openWrite(mode: FileMode.append);
       } else if (data is Map<String, dynamic>) {
+        channels = data["Channels indexes"] as List<int>;
         _writeHeader(sink, data);
       } else {
         sink.close();
@@ -118,15 +121,16 @@ class FileWriter {
     sink.write("NSeq, I1, I2, O1, O2, ${labels.join(", ")}\n");
   }
 
-  static Future<void> _write(IOSink sink, Frame frame) async {
-    //if (_writing) {
-    //if (!_headerWritten) await _writeHeader();
-    sink.write(
-        "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${frame.a.where((value) => value != null).join(", ")}\n");
-    //}
+  static Future<void> _write(
+      IOSink sink, List<Frame> frames, List<int> channels) async {
+    final chunk = frames
+        .map((frame) =>
+            "${frame.seq}, ${frame.digital.map((value) => value ? 1 : 0).join(", ")}, ${channels.map((int channel) => frame.a[channel]).join(", ")}\n")
+        .join();
+    sink.write(chunk);
   }
 
-  void write(Frame frame) {
+  void write(List<Frame> frame) {
     sendPort?.send(frame);
   }
 

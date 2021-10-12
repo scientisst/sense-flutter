@@ -3,7 +3,7 @@ eescription: Use your ScientISST Sense device on your smartphone.
 
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -22,6 +22,7 @@ dependencies:
   fluttertoast: ^8.0.8
   intl: ^0.17.0
   location: ^4.3.0
+  mask_text_input_formatter: ^2.0.0
   open_file: ^3.2.1
   path_provider: ^2.0.2
   permission_handler: ^8.1.4+2
@@ -36,29 +37,18 @@ dependencies:
     git:
       url: https://github.com/Shiba-Kar/Slider-Button.git
       ref: master
+  wakelock: ^0.5.6
   watcher: ^1.0.0
 
 dev_dependencies:
-  flutter_launcher_icons:
-    git:
-        url: https://github.com/knyghtryda/flutter_launcher_icons
-        ref: scaling
   flutter_native_splash: ^1.2.0
   flutter_test:
     sdk: flutter
   lint: ^1.0.0
-
-dependency_overrides:
-  yaml: ^3.1.0
-  args: ^2.2.0
-  image: ^3.0.5
-
-flutter_icons:
-  android: "launcher_icon"
-  image_path: "assets/icon/icon.png"
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/images/
+    - assets/icon/

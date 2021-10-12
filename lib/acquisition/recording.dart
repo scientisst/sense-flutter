@@ -7,15 +7,18 @@ import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/acquisition/chart.dart';
 import 'package:sense/settings/device.dart';
 import 'package:sense/ui/my_button.dart';
+import 'package:sense/ui/my_topbar.dart';
+import 'package:sense/ui/widget_dialog.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/file_writer.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:disk_space/disk_space.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:wakelock/wakelock.dart';
 
-const REFRESH_RATE = 20;
-const REFRESH_RATE_STATIC = 10;
+const REFRESH_RATE = 5;
+const REFRESH_RATE_STATIC = 1;
 
 class Recording extends StatefulWidget {
   const Recording({Key? key}) : super(key: key);
@@ -42,7 +45,15 @@ class _RecordingState extends State<Recording> {
   double _fileSize = 0;
   bool _stopping = false;
 
+  Duration _duration = Duration.zero;
+
   late Duration _step;
+
+  @override
+  void initState() {
+    super.initState();
+    Wakelock.enable();
+  }
 
   @override
   void didChangeDependencies() {
@@ -83,13 +94,11 @@ class _RecordingState extends State<Recording> {
     try {
       await _sense.connect(onDisconnect: () {
         //TODO: handle disconnect during acquisition
-        if (_stopping) {
+        if (!_stopping) {
           Fluttertoast.showToast(
             msg: "Connection Lost",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.CENTER,
-            //textColor: Colors.white,
-            //fontSize: 16.0,
           );
         }
         if (mounted) setState(() {});
@@ -111,8 +120,16 @@ class _RecordingState extends State<Recording> {
       _time.addAll(
         List.generate(
           settings.samplingRate * _windowInSeconds,
-          (index) => start.add(
+          (index) => start.subtract(
             Duration(microseconds: index * ds),
+          ),
+        ).reversed,
+      );
+      _data.forEach(
+        (list) => list.addAll(
+          List.filled(
+            settings.samplingRate * _windowInSeconds,
+            0,
           ),
         ),
       );
@@ -129,10 +146,14 @@ class _RecordingState extends State<Recording> {
       await _sense.start(settings.samplingRate, settings.channels);
 
       final numFrames = settings.samplingRate ~/ REFRESH_RATE;
-      if (settings.save) {
-        _stream = _saveStream(numFrames);
+      if (settings.plot) {
+        if (settings.save) {
+          _stream = _plotSaveStream(numFrames);
+        } else {
+          _stream = _plotStream(numFrames);
+        }
       } else {
-        _stream = _doNotSaveStream(numFrames);
+        _stream = _doNotPlotStream(numFrames);
       }
 
       _refresh = Timer.periodic(
@@ -142,6 +163,7 @@ class _RecordingState extends State<Recording> {
         ),
         (Timer timer) {
           if (mounted) {
+            _duration = DateTime.now().difference(start);
             setState(() {});
           } else {
             timer.cancel();
@@ -155,7 +177,7 @@ class _RecordingState extends State<Recording> {
         ),
         (Timer timer) async {
           if (mounted) {
-            _fileSize = (await fileWriter?.fileSize()) ?? 0;
+            _fileSize = ((await fileWriter?.fileSize()) ?? 0) / 1024;
             _diskSpace = (await DiskSpace.getFreeDiskSpace) ?? 0;
           } else {
             timer.cancel();
@@ -165,34 +187,32 @@ class _RecordingState extends State<Recording> {
     }
   }
 
-  StreamSubscription _doNotSaveStream(int numFrames) => _sense
+  StreamSubscription _plotSaveStream(int numFrames) => _sense
           .stream(numFrames: numFrames == 0 ? 1 : numFrames)
           .listen((List<Frame> frames) {
-        for (final frame in frames) {
-          for (int i = 0; i < settings.channels.length; i++) {
-            _data[i].add(frame.a[settings.channels[i] - 1]);
-          }
-          if (_data.first.length > _time.length) {
-            _data.forEach((list) => list.removeAt(0));
-            _time.removeAt(0);
-            _time.add(_time.last.add(_step));
-          }
-        }
+        _processPlotFrames(frames);
+        fileWriter!.write(frames);
       });
 
-  StreamSubscription _saveStream(int numFrames) =>
+  StreamSubscription _plotStream(int numFrames) => _sense
+      .stream(numFrames: numFrames == 0 ? 1 : numFrames)
+      .listen((List<Frame> frames) => _processPlotFrames(frames));
+
+  void _processPlotFrames(List<Frame> frames) {
+    for (final frame in frames) {
+      for (int i = 0; i < settings.channels.length; i++) {
+        _data[i].add(frame.a[settings.channels[i] - 1]);
+      }
+      _time.add(_time.last.add(_step));
+    }
+
+    _data.forEach((list) => list.removeRange(0, frames.length));
+    _time.removeRange(0, frames.length);
+  }
+
+  StreamSubscription _doNotPlotStream(int numFrames) =>
       _sense.stream().listen((List<Frame> frames) async {
-        for (final frame in frames) {
-          for (int i = 0; i < settings.channels.length; i++) {
-            _data[i].add(frame.a[settings.channels[i] - 1]);
-          }
-          fileWriter!.write(frame);
-          if (_data.first.length > _time.length) {
-            _data.forEach((list) => list.removeAt(0));
-            _time.removeAt(0);
-            _time.add(_time.last.add(_step));
-          }
-        }
+        fileWriter!.write(frames);
       });
 
   Future<void> _stopAcquisition() async {
@@ -205,30 +225,36 @@ class _RecordingState extends State<Recording> {
     if (_sense.acquiring) {
       final result = await showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Exit the acquisition'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: const <Widget>[
-                Text(
-                    'This might lead to loss of some data. Do you want to proceed?'),
-              ],
-            ),
+        builder: (context) => WidgetDialog(
+          icon: const Icon(Icons.warning),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                  "Do you want to exit? This might lead to loss of some data."),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _stopping = true;
+                      Navigator.of(context).pop(true);
+                    },
+                    style: TextButton.styleFrom(
+                      primary: Colors.grey,
+                    ),
+                    child: const Text('Exit'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('Exit'),
-            ),
-          ],
         ),
       ) as bool?;
       return result ?? false;
@@ -238,185 +264,299 @@ class _RecordingState extends State<Recording> {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     if (!starting) {
+      _stopping = true;
       _refresh?.cancel();
       _refreshSize?.cancel();
+      _stopAcquisition();
       _sense.disconnect();
       _stream?.cancel();
       fileWriter?.close();
     }
+    Wakelock.disable();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final duration = _sense.acquiring ? DateTime.now().difference(start) : null;
     return WillPopScope(
       onWillPop: _onWillPop,
-      child: Scaffold(
-        appBar: AppBar(
-          title: _sense.acquiring
+      child: SafeArea(
+        child: settings.plot ? _buildPlotsScaffold() : _buildScaffold(),
+      ),
+    );
+  }
+
+  Widget _buildWithTopBar({required Widget topChild, required Widget child}) =>
+      Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 60),
+            child: child,
+          ),
+          SizedBox(
+            height: 100,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: MyTopBar(
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                    ),
+                    iconSize: 28,
+                    onPressed: () async {
+                      if (await _onWillPop()) Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                child: topChild,
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Scaffold _buildPlotsScaffold() => Scaffold(
+        body: _buildWithTopBar(
+          topChild: _sense.acquiring
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SpinKitPulse(
-                      color: Color(0xFFFF0000),
+                      color: Color(0xFFFFFFFF),
                       size: 20,
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      settings.plot ? "${duration ?? ""}" : "Recording",
+                      _duration.toString().split('.').first.padLeft(8, "0"),
                     ),
                   ],
                 )
               : const Text("Acquisition"),
-        ),
-        body: Builder(
-          builder: (context) {
-            if (_connecting) {
-              return const Connecting();
-            } else {
-              if (!_sense.connected) {
-                return FailedConnect(() async {
-                  await _connect();
-                  if (_sense.connected && !_sense.acquiring) {
-                    _startAcquisition();
-                  }
-                });
+          child: Builder(
+            builder: (context) {
+              if (_connecting) {
+                return const Connecting();
               } else {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: settings.plot
-                          ? ListView.builder(
-                              itemCount: settings.channels.length,
-                              itemBuilder: (context, index) {
-                                final active = _activeChannels[index];
-                                return Container(
-                                  margin: const EdgeInsets.all(8),
-                                  child: Stack(
-                                    children: [
-                                      if (active)
-                                        SizedBox(
-                                          height: 300,
-                                          child: Card(
-                                            elevation: 3,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 40,
-                                                left: 40,
-                                                bottom: 28,
-                                                right: 30,
-                                              ),
-                                              child: Chart(
-                                                _time,
-                                                _data[index],
-                                              ),
-                                            ),
+                if (!_sense.connected) {
+                  return FailedConnect(_retryConnect);
+                } else {
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(top: 10),
+                          itemCount: settings.channels.length,
+                          itemBuilder: (context, index) {
+                            final active = _activeChannels[index];
+                            return Container(
+                              margin: const EdgeInsets.all(8),
+                              child: Stack(
+                                children: [
+                                  if (active)
+                                    SizedBox(
+                                      height: 300,
+                                      child: Card(
+                                        elevation: 3,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 40,
+                                            left: 40,
+                                            bottom: 28,
+                                            right: 30,
                                           ),
-                                        )
-                                      else
-                                        Container(),
-                                      Align(
-                                        alignment: Alignment.topCenter,
-                                        child: MaterialButton(
-                                          color: active
-                                              ? theme.accentColor
-                                              : theme.disabledColor,
-                                          shape: const CircleBorder(),
-                                          elevation: 3,
-                                          materialTapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          onPressed: () {
-                                            setState(() {
-                                              _activeChannels[index] =
-                                                  !_activeChannels[index];
-                                            });
-                                          },
-                                          child: Text(
-                                            CHANNELS[
-                                                settings.channels[index] - 1],
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
+                                          child: Chart(
+                                            _time,
+                                            _data[index],
                                           ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Center(
-                                  child: Text(
-                                    "${duration ?? ""}",
-                                    style: const TextStyle(
-                                      fontSize: 28,
+                                    )
+                                  else
+                                    Container(),
+                                  Align(
+                                    alignment: Alignment.topCenter,
+                                    child: MaterialButton(
+                                      color: active
+                                          ? Theme.of(context).accentColor
+                                          : Theme.of(context).disabledColor,
+                                      shape: const CircleBorder(),
+                                      elevation: 3,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      onPressed: () {
+                                        setState(() {
+                                          _activeChannels[index] =
+                                              !_activeChannels[index];
+                                        });
+                                      },
+                                      child: Text(
+                                        CHANNELS[settings.channels[index] - 1],
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 32,
-                                ),
-                                Center(
-                                  child: Text(
-                                    "File Size: ${_fileSize.toStringAsFixed(1)} MB",
-                                  ),
-                                ),
-                                Center(
-                                  child: Text(
-                                    "Free Space: ${_diskSpace.toStringAsFixed(1)} MB",
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        constraints: const BoxConstraints(
+                          maxWidth: 400,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) => SliderButton(
+                            width: constraints.maxWidth,
+                            buttonColor: Theme.of(context).accentColor,
+                            dismissible: false,
+                            backgroundColor: Colors.grey[200]!,
+                            action: _stopAcquisition,
+                            label: const Text(
+                              "Slide to stop Acquisition",
+                              style: TextStyle(
+                                  color: Color(0xff4a4a4a),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 17),
                             ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      constraints: const BoxConstraints(
-                        maxWidth: 400,
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) => SliderButton(
-                          width: constraints.maxWidth,
-                          buttonColor: theme.accentColor,
-                          dismissible: false,
-                          backgroundColor: Colors.grey[200]!,
-                          action: _stopAcquisition,
-                          label: const Text(
-                            "Slide to stop Acquisition",
-                            style: TextStyle(
-                                color: Color(0xff4a4a4a),
-                                fontWeight: FontWeight.w500,
-                                fontSize: 17),
-                          ),
-                          icon: const Icon(
-                            Icons.close,
-                            color: Colors.white,
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  );
+                }
+              }
+            },
+          ),
+        ),
+      );
+
+  Scaffold _buildScaffold() => Scaffold(
+        body: _buildWithTopBar(
+          topChild: _sense.acquiring
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    SpinKitPulse(
+                      color: Color(0xFFFFFFFF),
+                      size: 20,
+                    ),
+                    SizedBox(width: 16),
+                    Text(
+                      "Recording",
                     ),
                   ],
-                );
+                )
+              : const Text("Acquisition"),
+          child: Builder(
+            builder: (context) {
+              if (_connecting) {
+                return const Connecting();
+              } else {
+                if (!_sense.connected) {
+                  return FailedConnect(() async {
+                    await _connect();
+                    if (_sense.connected && !_sense.acquiring) {
+                      _startAcquisition();
+                    }
+                  });
+                } else {
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Center(
+                              child: Text(
+                                _duration
+                                    .toString()
+                                    .split('.')
+                                    .first
+                                    .padLeft(8, "0"),
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 32,
+                            ),
+                            Center(
+                              child: Text(
+                                "File Size: ${_fileSize.toStringAsFixed(1)} MB",
+                              ),
+                            ),
+                            Center(
+                              child: Text(
+                                "Free Space: ${_diskSpace.toStringAsFixed(1)} MB",
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        constraints: const BoxConstraints(
+                          maxWidth: 400,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) => SliderButton(
+                            width: constraints.maxWidth,
+                            buttonColor: Theme.of(context).accentColor,
+                            dismissible: false,
+                            backgroundColor: Colors.grey[200]!,
+                            action: _stopAcquisition,
+                            label: const Text(
+                              "Slide to stop Acquisition",
+                              style: TextStyle(
+                                  color: Color(0xff4a4a4a),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 17),
+                            ),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
               }
-            }
-          },
+            },
+          ),
         ),
-      ),
-    );
+      );
+
+  Future<void> _retryConnect() async {
+    await _connect();
+    if (_sense.connected && !_sense.acquiring) {
+      _startAcquisition();
+    }
   }
 }
 
