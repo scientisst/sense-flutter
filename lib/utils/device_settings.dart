@@ -6,7 +6,7 @@ class DeviceSettings with ChangeNotifier {
 
   String? _address;
   String? _name;
-  List<int> _channels = [1, 2, 3, 4, 5, 6, 7, 8];
+  List<int> _channels = [1, 2, 3, 4, 5, 6];
   int _samplingRate = 1000;
   int _refreshRate = 5;
   bool _save = true;

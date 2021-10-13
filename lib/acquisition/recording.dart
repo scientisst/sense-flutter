@@ -17,7 +17,6 @@ import 'package:disk_space/disk_space.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:wakelock/wakelock.dart';
 
-const REFRESH_RATE = 10;
 const REFRESH_RATE_STATIC = 1;
 
 class Recording extends StatefulWidget {
@@ -148,7 +147,7 @@ class _RecordingState extends State<Recording> {
 
       await _sense.start(settings.samplingRate, settings.channels);
 
-      final numFrames = settings.samplingRate ~/ REFRESH_RATE;
+      final numFrames = settings.samplingRate ~/ settings.refreshRate;
       if (settings.plot) {
         if (settings.save) {
           _stream = _plotSaveStream(numFrames);
@@ -156,13 +155,13 @@ class _RecordingState extends State<Recording> {
           _stream = _plotStream(numFrames);
         }
       } else {
-        _stream = _doNotPlotStream(numFrames);
+        _stream = _doNotPlotStream();
       }
 
       _refresh = Timer.periodic(
         Duration(
-          milliseconds:
-              1000 ~/ (settings.plot ? REFRESH_RATE : REFRESH_RATE_STATIC),
+          microseconds: 1000000 ~/
+              (settings.plot ? settings.refreshRate : REFRESH_RATE_STATIC),
         ),
         (Timer timer) {
           if (mounted) {
@@ -174,19 +173,21 @@ class _RecordingState extends State<Recording> {
         },
       );
 
-      _refreshSize = Timer.periodic(
-        const Duration(
-          seconds: 1,
-        ),
-        (Timer timer) async {
-          if (mounted) {
-            _fileSize = ((await fileWriter?.fileSize()) ?? 0) / 1024;
-            _diskSpace = (await DiskSpace.getFreeDiskSpace) ?? 0;
-          } else {
-            timer.cancel();
-          }
-        },
-      );
+      if (!settings.plot) {
+        _refreshSize = Timer.periodic(
+          const Duration(
+            seconds: 1,
+          ),
+          (Timer timer) async {
+            if (mounted) {
+              _fileSize = ((await fileWriter?.fileSize()) ?? 0) / 1024;
+              _diskSpace = (await DiskSpace.getFreeDiskSpace) ?? 0;
+            } else {
+              timer.cancel();
+            }
+          },
+        );
+      }
     }
   }
 
@@ -213,7 +214,7 @@ class _RecordingState extends State<Recording> {
     _time.removeRange(0, frames.length);
   }
 
-  StreamSubscription _doNotPlotStream(int numFrames) =>
+  StreamSubscription _doNotPlotStream() =>
       _sense.stream().listen((List<Frame> frames) async {
         fileWriter!.write(frames);
       });

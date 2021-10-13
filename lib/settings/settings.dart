@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:sense/settings/bluetooth_search.dart';
 import 'package:sense/settings/device.dart';
 import 'package:sense/utils/device_settings.dart';
-import 'package:sense/utils/shared_pref.dart';
 
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
