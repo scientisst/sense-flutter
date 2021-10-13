@@ -17,7 +17,7 @@ import 'package:disk_space/disk_space.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:wakelock/wakelock.dart';
 
-const REFRESH_RATE = 5;
+const REFRESH_RATE = 10;
 const REFRESH_RATE_STATIC = 1;
 
 class Recording extends StatefulWidget {
@@ -116,6 +116,9 @@ class _RecordingState extends State<Recording> {
 
       final ds = 1000000 ~/ settings.samplingRate;
       _step = Duration(microseconds: ds);
+
+      _time.clear();
+      _data.forEach((list) => list.clear());
 
       _time.addAll(
         List.generate(

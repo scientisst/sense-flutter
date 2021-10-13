@@ -40,6 +40,12 @@ dependencies:
   wakelock: ^0.5.6
   watcher: ^1.0.0
 
+dependency_overrides:
+  charts_flutter:
+    git:
+      url: https://github.com/google/charts
+      path: charts_flutter
+
 dev_dependencies:
   flutter_native_splash: ^1.2.0
   flutter_test:

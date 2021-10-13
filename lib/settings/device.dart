@@ -22,6 +22,16 @@ const FS = [
   10000,
 ];
 
+const REFRESH_RATE = [
+  1,
+  5,
+  10,
+  15,
+  20,
+  25,
+  30,
+];
+
 const CHANNELS = ["AI1", "AI2", "AI3", "AI4", "AI5", "AI6", "AX1", "AX2"];
 
 class Device extends StatefulWidget {
@@ -32,7 +42,9 @@ class Device extends StatefulWidget {
 }
 
 class _DeviceState extends State<Device> {
-  int _fs = 5;
+  int _fs = 4;
+  int _refresh = 1;
+
   final _channels = [false, false, false, false, false, false, false, false];
   int duration = 0;
   late DeviceSettings settings;
@@ -48,6 +60,7 @@ class _DeviceState extends State<Device> {
     settings = Provider.of<DeviceSettings>(context);
     settings.channels.forEach((int channel) => _channels[channel - 1] = true);
     _fs = FS.indexOf(settings.samplingRate);
+    _refresh = REFRESH_RATE.indexOf(settings.refreshRate);
   }
 
   Future<void> _forget() async {
@@ -66,14 +79,14 @@ class _DeviceState extends State<Device> {
     await SharedPref.write("channels", settings.channels);
   }
 
-  _setPlotState(bool value) async {
+  Future<void> _setPlotState(bool value) async {
     setState(() {
       settings.plot = value;
     });
     await SharedPref.write("plot", value);
   }
 
-  _setSaveState(bool value) async {
+  Future<void> _setSaveState(bool value) async {
     setState(() {
       settings.save = value;
     });
@@ -87,25 +100,10 @@ class _DeviceState extends State<Device> {
       onPressed: null,
       style: ElevatedButton.styleFrom(
         primary: theme.disabledColor,
-        //tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: const Text("-"),
     );
     return Scaffold(
-      /*actions: [
-          SizedBox(
-            height: 48,
-            width: 48,
-            child: IconButton(
-              onPressed: () {
-                _forget();
-              },
-              icon: const Icon(
-                Icons.close,
-              ),
-            ),
-          ),
-        ],*/
       body: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(),
@@ -173,6 +171,7 @@ class _DeviceState extends State<Device> {
                 }
               },
             ),
+            if (settings.plot) _buildRefreshRateSlider(),
             SwitchListTile(
               title: const Text("Save file"),
               value: settings.save,
@@ -233,6 +232,7 @@ class _DeviceState extends State<Device> {
                 });
                 settings.samplingRate = FS[_fs];
                 await SharedPref.write("samplingRate", settings.samplingRate);
+                _verifyRefreshRate();
               },
             ),
             const Center(
@@ -344,6 +344,47 @@ class _DeviceState extends State<Device> {
     );
   }
 
+  Widget _buildRefreshRateSlider() => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                "Refresh Rate: ",
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+              Text(
+                "${REFRESH_RATE[_refresh]}",
+              ),
+              const Text(
+                " Hz",
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          Slider.adaptive(
+            value: _refresh.toDouble(),
+            divisions: REFRESH_RATE.length - 1,
+            max: REFRESH_RATE.length - 1,
+            onChanged: (value) async {
+              if (FS[_fs] >= REFRESH_RATE[value.toInt()]) {
+                setState(() {
+                  _refresh = value.toInt();
+                });
+                settings.refreshRate = REFRESH_RATE[_refresh];
+                await SharedPref.write("refreshRate", settings.refreshRate);
+              }
+            },
+          ),
+        ],
+      );
+
   Widget _getChannelButton(
     int channel,
   ) {
@@ -366,5 +407,17 @@ class _DeviceState extends State<Device> {
         ),
       ),
     );
+  }
+
+  Future<void> _verifyRefreshRate() async {
+    if (FS[_fs] < REFRESH_RATE[_refresh]) {
+      final value =
+          REFRESH_RATE.lastIndexWhere((int value) => value <= FS[_fs]);
+      setState(() {
+        _refresh = value;
+      });
+      settings.refreshRate = REFRESH_RATE[_refresh];
+      await SharedPref.write("refreshRate", settings.refreshRate);
+    }
   }
 }
