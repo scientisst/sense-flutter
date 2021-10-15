@@ -58,7 +58,7 @@ class DeviceSettings with ChangeNotifier {
   Future<void> loadSettings() async {
     final name = await SharedPref.read("name") as String?;
     final channels = List<int>.from(
-        await SharedPref.read("channels") as List? ?? [1, 2, 3, 4, 5, 6, 7, 8]);
+        await SharedPref.read("channels") as List? ?? [1, 2, 3, 4, 5, 6]);
     final address = await SharedPref.read("address") as String?;
     final samplingRate = await SharedPref.read("samplingRate") as int?;
     final refreshRate = await SharedPref.read("refreshRate") as int?;
