@@ -62,9 +62,11 @@ packages:
   charts_flutter:
     dependency: "direct main"
     description:
-      name: charts_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: charts_flutter
+      ref: HEAD
+      resolved-ref: "30477090290b348ed3101bc13017aae465f59017"
+      url: "https://github.com/google/charts"
+    source: git
     version: "0.11.0"
   clock:
     dependency: transitive
@@ -373,7 +375,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: a1c6348e7e054ececdde95355dcb6fdaa76fb588
+      resolved-ref: "539701257265fc6102c51489755902bae4683ffb"
       url: "https://github.com/scientisst/scientisst-sense-api-flutter"
     source: git
     version: "0.0.1"
