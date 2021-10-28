@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
 import 'package:sense/acquisition/chart.dart';
+import 'package:sense/acquisition/chart_item.dart';
 import 'package:sense/settings/device.dart';
 import 'package:sense/ui/my_button.dart';
 import 'package:sense/ui/my_topbar.dart';
@@ -356,62 +357,17 @@ class _RecordingState extends State<Recording> {
                           padding: const EdgeInsets.only(top: 10),
                           itemCount: settings.channels.length,
                           itemBuilder: (context, index) {
-                            final active = _activeChannels[index];
-                            return Container(
-                              margin: const EdgeInsets.all(8),
-                              child: Stack(
-                                children: [
-                                  if (active)
-                                    SizedBox(
-                                      height: 300,
-                                      child: Card(
-                                        elevation: 3,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 40,
-                                            left: 40,
-                                            bottom: 28,
-                                            right: 30,
-                                          ),
-                                          child: Chart(
-                                            _time,
-                                            _data[index],
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    Container(),
-                                  Align(
-                                    alignment: Alignment.topCenter,
-                                    child: MaterialButton(
-                                      color: active
-                                          ? Theme.of(context).accentColor
-                                          : Theme.of(context).disabledColor,
-                                      shape: const CircleBorder(),
-                                      elevation: 3,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      onPressed: () {
-                                        setState(() {
-                                          _activeChannels[index] =
-                                              !_activeChannels[index];
-                                        });
-                                      },
-                                      child: Text(
-                                        CHANNELS[settings.channels[index] - 1],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            return ChartItem(
+                              _time,
+                              _data[index],
+                              active: _activeChannels[index],
+                              onActivePressed: () {
+                                setState(() {
+                                  _activeChannels[index] =
+                                      !_activeChannels[index];
+                                });
+                              },
+                              label: CHANNELS[settings.channels[index] - 1],
                             );
                           },
                         ),

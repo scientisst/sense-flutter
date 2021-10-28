@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/acquisition/recording.dart';
 import 'package:sense/ui/my_button.dart';
-import 'package:sense/ui/my_topbar.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/utils.dart';
 import 'package:open_file/open_file.dart';
@@ -24,6 +23,7 @@ class _AcquisitionsState extends State<Acquisitions>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       body: SafeArea(
         child: Stack(

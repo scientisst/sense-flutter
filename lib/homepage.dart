@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sense/acquisition/acquisitions.dart';
 import 'package:sense/settings/settings.dart';
 import 'package:sense/ui/my_topbar.dart';
+import 'package:sense/utils/device_settings.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -34,11 +38,26 @@ class _HomePageState extends State<HomePage>
     Acquisitions(),
     Settings(),
   ];
+  final _loadingSettings = Completer<DeviceSettings>();
 
   @override
   void initState() {
     super.initState();
     _controller = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_loadingSettings.isCompleted) {
+      _loadSettings();
+    }
+  }
+
+  Future<void> _loadSettings() async {
+    final settings = Provider.of<DeviceSettings>(context, listen: false);
+    await settings.loadSettings();
+    _loadingSettings.complete(settings);
   }
 
   @override
