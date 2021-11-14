@@ -374,9 +374,11 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                     connecting = true;
                   });
                   await setDevice(device.address, device.name);
-                  setState(() {
-                    connecting = false;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      connecting = false;
+                    });
+                  }
                 },
               );
             },

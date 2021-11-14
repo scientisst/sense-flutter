@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:scientisst_sense/scientisst_sense.dart';
-import 'package:sense/acquisition/chart.dart';
 import 'package:sense/acquisition/chart_item.dart';
 import 'package:sense/settings/device.dart';
 import 'package:sense/ui/my_button.dart';
@@ -103,6 +102,7 @@ class _RecordingState extends State<Recording> {
         }
         if (mounted) setState(() {});
       });
+      await _sense.version();
     } on SenseException catch (e) {
       if (e.type != SenseErrorType.DEVICE_NOT_FOUND) rethrow;
     }
