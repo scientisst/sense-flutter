@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:package_info/package_info.dart';
 import 'package:provider/provider.dart';
 import 'package:sense/utils/device_settings.dart';
 import 'package:sense/utils/shared_pref.dart';
@@ -337,6 +338,36 @@ class _DeviceState extends State<Device> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 20),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Biomedical engineering for everyone",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+                FutureBuilder(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, AsyncSnapshot<PackageInfo> snap) {
+                    if (snap.hasData) {
+                      return Text(
+                        "v${snap.data!.version}+${snap.data!.buildNumber}",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      );
+                    }
+                    return Container();
+                  },
+                ),
+              ],
             ),
           ],
         ),
