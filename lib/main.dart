@@ -27,7 +27,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         disabledColor: MyColors.lightGrey,
         primaryColor: MyColors.primary,
-        accentColor: MyColors.primary,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: MyColors.primarySwatch,
+        ),
         scaffoldBackgroundColor: const Color(0xFFFEFEFE),
         appBarTheme: const AppBarTheme(
           backgroundColor: MyColors.primary,
@@ -39,9 +41,6 @@ class MyApp extends StatelessWidget {
         iconTheme: const IconThemeData(
             //color: Colors.white,
             ),
-        accentIconTheme: const IconThemeData(
-          color: MyColors.primary,
-        ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           unselectedItemColor: MyColors.lightGrey,
           selectedItemColor: MyColors.primary,

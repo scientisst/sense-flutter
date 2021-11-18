@@ -383,7 +383,7 @@ class _RecordingState extends State<Recording> {
                         child: LayoutBuilder(
                           builder: (context, constraints) => SliderButton(
                             width: constraints.maxWidth,
-                            buttonColor: Theme.of(context).accentColor,
+                            buttonColor: Theme.of(context).colorScheme.primary,
                             dismissible: false,
                             backgroundColor: Colors.grey[200]!,
                             action: _stopAcquisition,
@@ -485,7 +485,7 @@ class _RecordingState extends State<Recording> {
                         child: LayoutBuilder(
                           builder: (context, constraints) => SliderButton(
                             width: constraints.maxWidth,
-                            buttonColor: Theme.of(context).accentColor,
+                            buttonColor: Theme.of(context).colorScheme.primary,
                             dismissible: false,
                             backgroundColor: Colors.grey[200]!,
                             action: _stopAcquisition,
@@ -526,7 +526,7 @@ class Connecting extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SpinKitRipple(
-        color: Theme.of(context).accentColor,
+        color: Theme.of(context).colorScheme.primary,
         size: 100,
       ),
     );

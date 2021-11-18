@@ -365,7 +365,7 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                         width: 32,
                         child: SpinKitDoubleBounce(
                           size: 24,
-                          color: Theme.of(context).accentColor,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       )
                     : SignalIcon(strength),

@@ -34,7 +34,7 @@ class _ChartItemState extends State<ChartItem> {
             child: Row(
               children: [
                 Chip(
-                  backgroundColor: theme.accentColor,
+                  backgroundColor: theme.colorScheme.primary,
                   label: Text(
                     widget.label,
                     style: const TextStyle(
@@ -46,7 +46,9 @@ class _ChartItemState extends State<ChartItem> {
                 Expanded(child: Container()),
                 IconButton(
                   padding: EdgeInsets.zero,
-                  color: _autoScale ? theme.accentColor : theme.disabledColor,
+                  color: _autoScale
+                      ? theme.colorScheme.primary
+                      : theme.disabledColor,
                   onPressed: () {
                     setState(() {
                       _autoScale = !_autoScale;
@@ -54,12 +56,15 @@ class _ChartItemState extends State<ChartItem> {
                   },
                   icon: Icon(
                     _autoScale ? Icons.zoom_out : Icons.zoom_in,
-                    color: _autoScale ? theme.accentColor : theme.disabledColor,
+                    color: _autoScale
+                        ? theme.colorScheme.primary
+                        : theme.disabledColor,
                   ),
                 ),
                 IconButton(
-                  color:
-                      widget.active ? theme.accentColor : theme.disabledColor,
+                  color: widget.active
+                      ? theme.colorScheme.primary
+                      : theme.disabledColor,
                   onPressed: widget.onActivePressed,
                   icon: const Icon(Icons.visibility),
                 ),

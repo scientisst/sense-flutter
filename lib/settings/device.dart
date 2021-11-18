@@ -428,8 +428,9 @@ class _DeviceState extends State<Device> {
         _updateChannels();
       },
       style: ElevatedButton.styleFrom(
-        primary:
-            _channels[index] ? Theme.of(context).accentColor : Colors.grey[300],
+        primary: _channels[index]
+            ? Theme.of(context).colorScheme.primary
+            : Colors.grey[300],
       ),
       child: Text(
         CHANNELS[index],
