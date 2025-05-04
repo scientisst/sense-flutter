@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:package_info/package_info.dart';
-import 'package:provider/provider.dart';
-import 'package:sense/utils/device_settings.dart';
-import 'package:sense/utils/shared_pref.dart';
+import "package:flutter/material.dart";
+import "package:fluttertoast/fluttertoast.dart";
+import "package:package_info_plus/package_info_plus.dart";
+import "package:provider/provider.dart";
+import "package:sense/utils/device_settings.dart";
+import "package:sense/utils/shared_pref.dart";
 
-const FS = [
+const List<int> FS = <int>[
   1,
   10,
   50,
@@ -23,20 +23,21 @@ const FS = [
   10000,
 ];
 
-const REFRESH_RATE = [
-  1,
-  5,
-  10,
-  15,
-  20,
-  25,
-  30,
+const List<int> REFRESH_RATE = <int>[1, 5, 10, 15, 20, 25, 30];
+
+const List<String> CHANNELS = <String>[
+  "AI1",
+  "AI2",
+  "AI3",
+  "AI4",
+  "AI5",
+  "AI6",
+  "AX1",
+  "AX2",
 ];
 
-const CHANNELS = ["AI1", "AI2", "AI3", "AI4", "AI5", "AI6", "AX1", "AX2"];
-
 class Device extends StatefulWidget {
-  const Device({Key? key}) : super(key: key);
+  const Device({super.key});
 
   @override
   _DeviceState createState() => _DeviceState();
@@ -46,7 +47,16 @@ class _DeviceState extends State<Device> {
   int _fs = 4;
   int _refresh = 1;
 
-  final _channels = [false, false, false, false, false, false, false, false];
+  final List<bool> _channels = <bool>[
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ];
   int duration = 0;
   late DeviceSettings settings;
 
@@ -72,10 +82,12 @@ class _DeviceState extends State<Device> {
   }
 
   Future<void> _updateChannels() async {
-    final channels =
-        List.generate(_channels.length, (index) => index + 1, growable: false)
-            .where((int channel) => _channels[channel - 1])
-            .toList();
+    final List<int> channels =
+        List.generate(
+          _channels.length,
+          (int index) => index + 1,
+          growable: false,
+        ).where((int channel) => _channels[channel - 1]).toList();
     settings.channels = channels;
     await SharedPref.write("channels", settings.channels);
   }
@@ -96,43 +108,33 @@ class _DeviceState extends State<Device> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final placeHolder = ElevatedButton(
+    final ThemeData theme = Theme.of(context);
+    final ElevatedButton placeHolder = ElevatedButton(
       onPressed: null,
-      style: ElevatedButton.styleFrom(
-        primary: theme.disabledColor,
-      ),
+      style: ElevatedButton.styleFrom(backgroundColor: theme.disabledColor),
       child: const Text("-"),
     );
     return Scaffold(
       body: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.only(
-            left: 8,
-            right: 8,
-            bottom: 20,
-          ),
-          children: [
+          padding: const EdgeInsets.only(left: 8, right: 8, bottom: 20),
+          children: <Widget>[
             const SizedBox(height: 16),
             Row(
-              children: [
+              children: <Widget>[
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
+                    children: <Widget>[
                       if (settings.name != null)
                         Text(
                           settings.name!,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       Text(
                         settings.address!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                        ),
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ],
                   ),
@@ -144,9 +146,7 @@ class _DeviceState extends State<Device> {
                     onPressed: () {
                       _forget();
                     },
-                    icon: const Icon(
-                      Icons.highlight_remove,
-                    ),
+                    icon: const Icon(Icons.highlight_remove),
                     iconSize: 32,
                     color: Theme.of(context).primaryColor,
                   ),
@@ -157,7 +157,7 @@ class _DeviceState extends State<Device> {
               title: const Text("Plot signals"),
               subtitle: const Text("Might affect performance"),
               value: settings.plot,
-              onChanged: (value) async {
+              onChanged: (bool value) async {
                 if (!value && !settings.save) {
                   Fluttertoast.showToast(
                     msg: "You must select one of the options.",
@@ -176,7 +176,7 @@ class _DeviceState extends State<Device> {
             SwitchListTile(
               title: const Text("Save file"),
               value: settings.save,
-              onChanged: (value) async {
+              onChanged: (bool value) async {
                 if (!value && !settings.plot) {
                   Fluttertoast.showToast(
                     msg: "You must select one of the options.",
@@ -207,27 +207,17 @@ class _DeviceState extends State<Device> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "${FS[_fs]}",
-                  style: const TextStyle(
-                    fontSize: 20,
-                  ),
-                ),
+              children: <Widget>[
+                Text("${FS[_fs]}", style: const TextStyle(fontSize: 20)),
                 const SizedBox(width: 8),
-                const Text(
-                  "Hz",
-                  style: TextStyle(
-                    color: Colors.grey,
-                  ),
-                ),
+                const Text("Hz", style: TextStyle(color: Colors.grey)),
               ],
             ),
             Slider.adaptive(
               value: _fs.toDouble(),
               divisions: FS.length - 1,
               max: FS.length - 1,
-              onChanged: (value) async {
+              onChanged: (double value) async {
                 setState(() {
                   _fs = value.toInt();
                 });
@@ -267,10 +257,10 @@ class _DeviceState extends State<Device> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
+                children: <Widget>[
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       _getChannelButton(1),
                       _getChannelButton(3),
                       placeHolder,
@@ -279,12 +269,12 @@ class _DeviceState extends State<Device> {
                   ),
                   const Expanded(
                     child: Image(
-                      image: AssetImage('assets/images/sense_front_on.png'),
+                      image: AssetImage("assets/images/sense_front_on.png"),
                     ),
                   ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       _getChannelButton(7),
                       _getChannelButton(5),
                       placeHolder,
@@ -312,10 +302,10 @@ class _DeviceState extends State<Device> {
               height: 200,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
+                children: <Widget>[
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       _getChannelButton(2),
                       _getChannelButton(4),
                       placeHolder,
@@ -324,12 +314,12 @@ class _DeviceState extends State<Device> {
                   ),
                   const Expanded(
                     child: Image(
-                      image: AssetImage('assets/images/sense_back.png'),
+                      image: AssetImage("assets/images/sense_back.png"),
                     ),
                   ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       _getChannelButton(8),
                       _getChannelButton(6),
                       placeHolder,
@@ -342,7 +332,7 @@ class _DeviceState extends State<Device> {
             const SizedBox(height: 20),
             Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
+              children: <Widget>[
                 const Text(
                   "Biomedical engineering for everyone",
                   style: TextStyle(
@@ -353,7 +343,10 @@ class _DeviceState extends State<Device> {
                 ),
                 FutureBuilder(
                   future: PackageInfo.fromPlatform(),
-                  builder: (context, AsyncSnapshot<PackageInfo> snap) {
+                  builder: (
+                    BuildContext context,
+                    AsyncSnapshot<PackageInfo> snap,
+                  ) {
                     if (snap.hasData) {
                       return Text(
                         "v${snap.data!.version}+${snap.data!.buildNumber}",
@@ -376,50 +369,36 @@ class _DeviceState extends State<Device> {
   }
 
   Widget _buildRefreshRateSlider() => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                "Refresh Rate: ",
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                "${REFRESH_RATE[_refresh]}",
-              ),
-              const Text(
-                " Hz",
-                style: TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          Slider.adaptive(
-            value: _refresh.toDouble(),
-            divisions: REFRESH_RATE.length - 1,
-            max: REFRESH_RATE.length - 1,
-            onChanged: (value) async {
-              if (FS[_fs] >= REFRESH_RATE[value.toInt()]) {
-                setState(() {
-                  _refresh = value.toInt();
-                });
-                settings.refreshRate = REFRESH_RATE[_refresh];
-                await SharedPref.write("refreshRate", settings.refreshRate);
-              }
-            },
-          ),
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          const Text("Refresh Rate: ", style: TextStyle(color: Colors.grey)),
+          Text("${REFRESH_RATE[_refresh]}"),
+          const Text(" Hz", style: TextStyle(color: Colors.grey)),
         ],
-      );
+      ),
+      Slider.adaptive(
+        value: _refresh.toDouble(),
+        divisions: REFRESH_RATE.length - 1,
+        max: REFRESH_RATE.length - 1,
+        onChanged: (double value) async {
+          if (FS[_fs] >= REFRESH_RATE[value.toInt()]) {
+            setState(() {
+              _refresh = value.toInt();
+            });
+            settings.refreshRate = REFRESH_RATE[_refresh];
+            await SharedPref.write("refreshRate", settings.refreshRate);
+          }
+        },
+      ),
+    ],
+  );
 
-  Widget _getChannelButton(
-    int channel,
-  ) {
-    final index = channel - 1;
+  Widget _getChannelButton(int channel) {
+    final int index = channel - 1;
     return ElevatedButton(
       onPressed: () {
         setState(() {
@@ -428,9 +407,10 @@ class _DeviceState extends State<Device> {
         _updateChannels();
       },
       style: ElevatedButton.styleFrom(
-        primary: _channels[index]
-            ? Theme.of(context).colorScheme.primary
-            : Colors.grey[300],
+        backgroundColor:
+            _channels[index]
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey[300],
       ),
       child: Text(
         CHANNELS[index],
@@ -443,8 +423,9 @@ class _DeviceState extends State<Device> {
 
   Future<void> _verifyRefreshRate() async {
     if (FS[_fs] < REFRESH_RATE[_refresh]) {
-      final value =
-          REFRESH_RATE.lastIndexWhere((int value) => value <= FS[_fs]);
+      final int value = REFRESH_RATE.lastIndexWhere(
+        (int value) => value <= FS[_fs],
+      );
       setState(() {
         _refresh = value;
       });

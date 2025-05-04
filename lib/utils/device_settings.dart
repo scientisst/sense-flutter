@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:sense/utils/shared_pref.dart';
+import "package:flutter/material.dart";
+import "package:sense/utils/shared_pref.dart";
 
 class DeviceSettings with ChangeNotifier {
   DeviceSettings();
 
   String? _address;
   String? _name;
-  List<int> _channels = [1, 2, 3, 4, 5, 6];
-  int _samplingRate = 1000;
+  List<int> _channels = <int>[1, 2, 3, 4, 5, 6];
+  int _samplingRate = 100;
   int _refreshRate = 5;
   bool _save = true;
   bool _plot = true;
@@ -56,14 +56,14 @@ class DeviceSettings with ChangeNotifier {
   }
 
   Future<void> loadSettings() async {
-    final name = await SharedPref.read("name") as String?;
-    final channels = List<int>.from(
-        await SharedPref.read("channels") as List? ?? [1, 2, 3, 4, 5, 6]);
-    final address = await SharedPref.read("address") as String?;
-    final samplingRate = await SharedPref.read("samplingRate") as int?;
-    final refreshRate = await SharedPref.read("refreshRate") as int?;
-    final save = await SharedPref.read("save") as bool? ?? true;
-    final plot = await SharedPref.read("plot") as bool? ?? true;
+    final String? name = await SharedPref.read("name") as String?;
+    final List<int> channels = List<int>.from(
+        await SharedPref.read("channels") as List? ?? <int>[1, 2, 3, 4, 5, 6]);
+    final String? address = await SharedPref.read("address") as String?;
+    final int? samplingRate = await SharedPref.read("samplingRate") as int?;
+    final int? refreshRate = await SharedPref.read("refreshRate") as int?;
+    final bool save = await SharedPref.read("save") as bool? ?? true;
+    final bool plot = await SharedPref.read("plot") as bool? ?? true;
 
     this.name = name;
     this.channels = channels;

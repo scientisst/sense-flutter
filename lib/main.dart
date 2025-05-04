@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:sense/colors.dart';
-import 'package:sense/utils/device_settings.dart';
-import 'homepage.dart';
+import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+import "package:provider/provider.dart";
+import "package:sense/colors.dart";
+import "package:sense/utils/device_settings.dart";
+import 'package:sense/homepage.dart';
 
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) {
+      create: (BuildContext context) {
         return DeviceSettings();
       },
       child: MyApp(),
@@ -19,11 +19,11 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: MyColors.primary,
-    ));
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(statusBarColor: MyColors.primary),
+    );
     return MaterialApp(
-      title: 'Sense',
+      title: "Sense",
       theme: ThemeData(
         disabledColor: MyColors.lightGrey,
         primaryColor: MyColors.primary,
@@ -35,12 +35,10 @@ class MyApp extends StatelessWidget {
           backgroundColor: MyColors.primary,
           centerTitle: true,
         ),
-        primaryIconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        primaryIconTheme: const IconThemeData(color: Colors.white),
         iconTheme: const IconThemeData(
-            //color: Colors.white,
-            ),
+          //color: Colors.white,
+        ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           unselectedItemColor: MyColors.lightGrey,
           selectedItemColor: MyColors.primary,
@@ -48,12 +46,9 @@ class MyApp extends StatelessWidget {
         buttonTheme: const ButtonThemeData(buttonColor: MyColors.primary),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            primary: MyColors.primary,
+            foregroundColor: MyColors.primary,
             elevation: 0,
-            side: const BorderSide(
-              color: MyColors.primary,
-              width: 2,
-            ),
+            side: const BorderSide(color: MyColors.primary, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(100),
             ),
@@ -61,7 +56,7 @@ class MyApp extends StatelessWidget {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            primary: MyColors.primary,
+            backgroundColor: MyColors.primary,
             //onPrimary: Colors.grey[1000],
             //onSurface: Colors.grey[1000],
             shape: RoundedRectangleBorder(
@@ -76,35 +71,22 @@ class MyApp extends StatelessWidget {
           valueIndicatorTextStyle: const TextStyle(),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            primary: MyColors.primary,
-          ),
+          style: TextButton.styleFrom(foregroundColor: MyColors.primary),
         ),
         inputDecorationTheme: const InputDecorationTheme(
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: MyColors.primary,
-            ),
+            borderSide: BorderSide(color: MyColors.primary),
           ),
           focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: MyColors.primary,
-            ),
+            borderSide: BorderSide(color: MyColors.primary),
           ),
-          hintStyle: TextStyle(
-            color: Colors.black54,
-          ),
+          hintStyle: TextStyle(color: Colors.black54),
         ),
         tabBarTheme: const TabBarTheme(
           labelColor: MyColors.primary,
           indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(
-              color: MyColors.primary,
-              width: 4.0,
-            ),
-            insets: EdgeInsets.only(
-              bottom: 48,
-            ),
+            borderSide: BorderSide(color: MyColors.primary, width: 4.0),
+            insets: EdgeInsets.only(bottom: 48),
           ),
         ),
       ),

@@ -1,10 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:sense/acquisition/chart.dart';
+import "package:flutter/material.dart";
+import "package:sense/acquisition/chart.dart";
 
 class ChartItem extends StatefulWidget {
-  const ChartItem(this.time, this.data,
-      {this.label = "A", this.onActivePressed, this.active = true, Key? key})
-      : super(key: key);
+  const ChartItem(
+    this.time,
+    this.data, {
+    this.label = "A",
+    this.onActivePressed,
+    this.active = true,
+    super.key,
+  });
 
   final bool active;
   final void Function()? onActivePressed;
@@ -21,18 +26,18 @@ class _ChartItemState extends State<ChartItem> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
+        children: <Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(
-                //horizontal: 8,
-                ),
+              //horizontal: 8,
+            ),
             child: Row(
-              children: [
+              children: <Widget>[
                 Chip(
                   backgroundColor: theme.colorScheme.primary,
                   label: Text(
@@ -46,9 +51,10 @@ class _ChartItemState extends State<ChartItem> {
                 Expanded(child: Container()),
                 IconButton(
                   padding: EdgeInsets.zero,
-                  color: _autoScale
-                      ? theme.colorScheme.primary
-                      : theme.disabledColor,
+                  color:
+                      _autoScale
+                          ? theme.colorScheme.primary
+                          : theme.disabledColor,
                   onPressed: () {
                     setState(() {
                       _autoScale = !_autoScale;
@@ -56,15 +62,17 @@ class _ChartItemState extends State<ChartItem> {
                   },
                   icon: Icon(
                     _autoScale ? Icons.zoom_out : Icons.zoom_in,
-                    color: _autoScale
-                        ? theme.colorScheme.primary
-                        : theme.disabledColor,
+                    color:
+                        _autoScale
+                            ? theme.colorScheme.primary
+                            : theme.disabledColor,
                   ),
                 ),
                 IconButton(
-                  color: widget.active
-                      ? theme.colorScheme.primary
-                      : theme.disabledColor,
+                  color:
+                      widget.active
+                          ? theme.colorScheme.primary
+                          : theme.disabledColor,
                   onPressed: widget.onActivePressed,
                   icon: const Icon(Icons.visibility),
                 ),
@@ -75,16 +83,8 @@ class _ChartItemState extends State<ChartItem> {
             SizedBox(
               height: 250,
               child: Padding(
-                padding: const EdgeInsets.only(
-                  left: 40,
-                  bottom: 28,
-                  right: 30,
-                ),
-                child: Chart(
-                  widget.time,
-                  widget.data,
-                  zeroBound: !_autoScale,
-                ),
+                padding: const EdgeInsets.only(left: 40, bottom: 28, right: 30),
+                child: Chart(widget.time, widget.data, zeroBound: !_autoScale),
               ),
             )
           else
