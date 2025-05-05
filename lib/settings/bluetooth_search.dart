@@ -1,41 +1,41 @@
-import 'dart:async';
-import 'dart:io';
-import 'dart:ui';
+import "dart:async";
+import "dart:io";
+import "dart:ui";
 
-import 'package:flutter/material.dart';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:location/location.dart';
-import 'package:provider/provider.dart';
-import 'package:sense/ui/my_button.dart';
-import 'package:sense/ui/widget_dialog.dart';
-import 'package:sense/utils/device_settings.dart';
-import 'package:sense/utils/shared_pref.dart';
-import 'package:bluetooth_enable/bluetooth_enable.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:sense/utils/utils.dart';
+import "package:flutter/material.dart";
+import "package:flutter/src/services/text_formatter.dart";
+import "package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart";
+import "package:flutter_spinkit/flutter_spinkit.dart";
+import "package:fluttertoast/fluttertoast.dart";
+import "package:location/location.dart";
+import "package:provider/provider.dart";
+import "package:sense/ui/my_button.dart";
+import "package:sense/ui/widget_dialog.dart";
+import "package:sense/utils/device_settings.dart";
+import "package:sense/utils/shared_pref.dart";
+import "package:bluetooth_enable/bluetooth_enable.dart";
+import "package:mask_text_input_formatter/mask_text_input_formatter.dart";
+import "package:sense/utils/utils.dart";
 
 class BluetoothSearch extends StatefulWidget {
-  const BluetoothSearch({Key? key}) : super(key: key);
+  const BluetoothSearch({super.key});
 
   @override
   _BluetoothSearchState createState() => _BluetoothSearchState();
 }
 
 class _BluetoothSearchState extends State<BluetoothSearch> {
-  final Map<String, BluetoothDiscoveryResult> _devices = {};
-  final List<String> _devicesOrder = [];
+  final Map<String, BluetoothDiscoveryResult> _devices =
+      <String, BluetoothDiscoveryResult>{};
+  final List<String> _devicesOrder = <String>[];
   bool _searching = false;
   StreamSubscription? _subscription;
   late DeviceSettings settings;
-  final _maskFormatter = MaskTextInputFormatter(
+  final MaskTextInputFormatter _maskFormatter = MaskTextInputFormatter(
     mask: "##:##:##:##:##:##",
-    filter: {
-      "#": RegExp("[a-fA-F0-9]"),
-    },
+    filter: <String, RegExp>{"#": RegExp("[a-fA-F0-9]")},
   );
-  final _controller = TextEditingController(text: "");
+  final TextEditingController _controller = TextEditingController(text: "");
 
   @override
   void initState() {
@@ -56,33 +56,34 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   }
 
   Future<bool?> showBluetoothDialog() async {
-    final result = await showDialog<bool?>(
+    final bool? result = await showDialog<bool?>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Turn on Bluetooth'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: const <Widget>[
-              Text('You need to turn on Bluetooth on your device.'),
+      builder:
+          (BuildContext context) => AlertDialog(
+            title: const Text("Turn on Bluetooth"),
+            content: const SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  Text("You need to turn on Bluetooth on your device."),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(true);
+                  //await AppSettings.openBluetoothSettings();
+                },
+                child: const Text("Go to Settings"),
+              ),
             ],
           ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop(true);
-              //await AppSettings.openBluetoothSettings();
-            },
-            child: const Text('Go to Settings'),
-          ),
-        ],
-      ),
     );
     return result;
   }
@@ -91,7 +92,7 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     if (!(await FlutterBluetoothSerial.instance.isEnabled ?? false)) {
       if (Platform.isAndroid) {
         // Request to turn on Bluetooth within an app
-        BluetoothEnable.enableBluetooth.then((result) {
+        BluetoothEnable.enableBluetooth.then((String result) {
           return result == "true";
         });
       } else {
@@ -102,7 +103,7 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   }
 
   Future<bool> _checkLocation() async {
-    final location = Location();
+    final Location location = Location();
     if (!await location.serviceEnabled()) {
       if (!await location.requestService()) {
         return false;
@@ -112,8 +113,8 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   }
 
   Future<void> _searchDevices() async {
-    final bluetoothEnabled = await _checkBluetooth();
-    final locationEnabled = await _checkLocation();
+    final bool bluetoothEnabled = await _checkBluetooth();
+    final bool locationEnabled = await _checkLocation();
     if (!bluetoothEnabled || !locationEnabled) {
       debugPrint("Something went wrong");
       // TODO: show error dialog
@@ -126,28 +127,28 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
 
     _devices.clear();
     _devicesOrder.clear();
-    _subscription = FlutterBluetoothSerial.instance.startDiscovery().listen(
-      (result) {
-        if (result.device.name?.toLowerCase().contains("scientisst") ?? false) {
-          final address = result.device.address;
-          if (_devices.isEmpty) {
-            _devicesOrder.add(address);
-          } else {
-            for (int i = 0; i < _devices.length; i++) {
-              if (!_devicesOrder.contains(address) &&
-                  _devices[_devices.keys.elementAt(i)]!.rssi < result.rssi) {
-                _devicesOrder.insert(i, address);
-                break;
-              }
+    _subscription = FlutterBluetoothSerial.instance.startDiscovery().listen((
+      BluetoothDiscoveryResult result,
+    ) {
+      if (result.device.name?.toLowerCase().contains("scientisst") ?? false) {
+        final String address = result.device.address;
+        if (_devices.isEmpty) {
+          _devicesOrder.add(address);
+        } else {
+          for (int i = 0; i < _devices.length; i++) {
+            if (!_devicesOrder.contains(address) &&
+                _devices[_devices.keys.elementAt(i)]!.rssi < result.rssi) {
+              _devicesOrder.insert(i, address);
+              break;
             }
           }
-          _devices[address] = result;
-          if (mounted) {
-            setState(() {});
-          }
         }
-      },
-    );
+        _devices[address] = result;
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    });
     Future.delayed(const Duration(seconds: 5)).then((_) {
       _searching = false;
       _subscription?.cancel();
@@ -159,30 +160,31 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   }
 
   Future<void> setDevice(String address, [String? name]) async {
-    final paired =
-        (await FlutterBluetoothSerial.instance.getBondStateForAddress(address))
-                .isBonded ||
-            ((await FlutterBluetoothSerial.instance
-                    .bondDeviceAtAddress(address, passkeyConfirm: true)
-                    .timeout(
-                      const Duration(seconds: 10),
-                      onTimeout: () => false,
-                    )) ??
-                false);
+    final bool paired =
+        (await FlutterBluetoothSerial.instance.getBondStateForAddress(
+          address,
+        )).isBonded ||
+        ((await FlutterBluetoothSerial.instance
+                .bondDeviceAtAddress(address, passkeyConfirm: true)
+                .timeout(
+                  const Duration(seconds: 10),
+                  onTimeout: () => false,
+                )) ??
+            false);
 
     if (paired) {
-      String? _name = name;
-      if (_name == null) {
-        final devices =
-            (await FlutterBluetoothSerial.instance.getBondedDevices()).where(
-          (device) => device.address == address,
-        );
-        if (devices.isNotEmpty) _name = devices.first.name;
+      String? name0 = name;
+      if (name0 == null) {
+        final Iterable<BluetoothDevice> devices = (await FlutterBluetoothSerial
+                .instance
+                .getBondedDevices())
+            .where((BluetoothDevice device) => device.address == address);
+        if (devices.isNotEmpty) name0 = devices.first.name;
       }
-      settings.name = _name;
+      settings.name = name0;
       settings.address = address;
       await SharedPref.write("address", address);
-      await SharedPref.write("name", _name);
+      await SharedPref.write("name", name0);
     } else {
       Fluttertoast.showToast(
         msg: "Failed to connect",
@@ -197,13 +199,13 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     return Scaffold(
       body: SafeArea(
         child: Stack(
-          children: [
+          children: <Widget>[
             Column(
-              children: [
+              children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 12, 4),
                   child: Row(
-                    children: [
+                    children: <Widget>[
                       const Expanded(
                         child: Text(
                           "Devices found:",
@@ -214,9 +216,7 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.add_circle_outline,
-                        ),
+                        icon: const Icon(Icons.add_circle_outline),
                         iconSize: 32,
                         color: Theme.of(context).primaryColor,
                         onPressed: _addDeviceDialog,
@@ -226,7 +226,7 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
                 ),
                 Expanded(
                   child: Builder(
-                    builder: (context) {
+                    builder: (BuildContext context) {
                       if (_searching && _devices.isEmpty) {
                         return Center(
                           child: SpinKitRipple(
@@ -262,82 +262,79 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
     );
   }
 
-  void _addDeviceDialog() async {
-    final formKey = GlobalKey<FormState>();
+  Future<void> _addDeviceDialog() async {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
     final String? address = await showDialog(
       context: context,
-      builder: (context) => WidgetDialog(
-        icon: const Icon(
-          Icons.bluetooth_rounded,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Manually add a device:",
-              style: TextStyle(
-                color: Colors.black54,
-              ),
-            ),
-            SizedBox(
-              width: 140,
-              child: Form(
-                key: formKey,
-                child: TextFormField(
-                  autofocus: true,
-                  inputFormatters: [
-                    _maskFormatter,
-                    UpperCaseTextFormatter(),
-                  ],
-                  style: const TextStyle(
-                    fontFeatures: [
-                      FontFeature.tabularFigures(),
-                    ],
+      builder:
+          (BuildContext context) => WidgetDialog(
+            icon: const Icon(Icons.bluetooth_rounded),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Text(
+                  "Manually add a device:",
+                  style: TextStyle(color: Colors.black54),
+                ),
+                SizedBox(
+                  width: 140,
+                  child: Form(
+                    key: formKey,
+                    child: TextFormField(
+                      autofocus: true,
+                      inputFormatters: <TextInputFormatter>[
+                        _maskFormatter,
+                        UpperCaseTextFormatter(),
+                      ],
+                      style: const TextStyle(
+                        fontFeatures: <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
+                      controller: _controller,
+                      keyboardType: TextInputType.visiblePassword,
+                      decoration: InputDecoration(
+                        hintText: "AA:BB:CC:DD:EE:FF",
+                        hintStyle: Theme.of(
+                          context,
+                        ).inputDecorationTheme.hintStyle?.copyWith(
+                          fontFeatures: <FontFeature>[
+                            const FontFeature.tabularFigures(),
+                          ],
+                        ),
+                      ),
+                      validator: (String? address) {
+                        if (!_maskFormatter.isFill()) {
+                          return "Invalid MAC address";
+                        }
+                        return null;
+                      },
+                    ),
                   ),
-                  controller: _controller,
-                  keyboardType: TextInputType.visiblePassword,
-                  decoration: InputDecoration(
-                    hintText: "AA:BB:CC:DD:EE:FF",
-                    hintStyle: Theme.of(context)
-                        .inputDecorationTheme
-                        .hintStyle
-                        ?.copyWith(
-                      fontFeatures: [
-                        const FontFeature.tabularFigures(),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        Navigator.of(
+                          context,
+                        ).pop(_maskFormatter.getMaskedText().toUpperCase());
+                      }
+                    },
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text("Connect"),
+                        Icon(Icons.arrow_right_rounded),
                       ],
                     ),
                   ),
-                  validator: (String? address) {
-                    if (!_maskFormatter.isFill()) {
-                      return "Invalid MAC address";
-                    }
-                    return null;
-                  },
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.of(context)
-                        .pop(_maskFormatter.getMaskedText().toUpperCase());
-                  }
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text("Connect"),
-                    Icon(Icons.arrow_right_rounded),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
     if (address != null) {
       setDevice(address);
@@ -345,46 +342,47 @@ class _BluetoothSearchState extends State<BluetoothSearch> {
   }
 
   Widget _buildDevices() => ListView.separated(
-        //padding: const EdgeInsets.only(top: 10),
-        physics: const BouncingScrollPhysics(),
-        separatorBuilder: (context, index) => const Divider(),
-        itemCount: _devicesOrder.length,
-        itemBuilder: (context, index) {
-          final strength = ((100 + _devices[_devicesOrder[index]]!.rssi) / 50)
-              .clamp(0.0, 1.0);
-          final device = _devices[_devicesOrder[index]]!.device;
-          bool connecting = false;
-          return StatefulBuilder(
-            builder: (BuildContext context, setState) {
-              return ListTile(
-                leading: const Icon(Icons.bluetooth),
-                title: Text(device.name ?? ""),
-                subtitle: Text(device.address),
-                trailing: connecting
+    //padding: const EdgeInsets.only(top: 10),
+    physics: const BouncingScrollPhysics(),
+    separatorBuilder: (BuildContext context, int index) => const Divider(),
+    itemCount: _devicesOrder.length,
+    itemBuilder: (BuildContext context, int index) {
+      final double strength =
+          ((100 + _devices[_devicesOrder[index]]!.rssi) / 50).clamp(0.0, 1.0);
+      final BluetoothDevice device = _devices[_devicesOrder[index]]!.device;
+      bool connecting = false;
+      return StatefulBuilder(
+        builder: (BuildContext context, setState) {
+          return ListTile(
+            leading: const Icon(Icons.bluetooth),
+            title: Text(device.name ?? ""),
+            subtitle: Text(device.address),
+            trailing:
+                connecting
                     ? SizedBox(
-                        width: 32,
-                        child: SpinKitDoubleBounce(
-                          size: 24,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      )
+                      width: 32,
+                      child: SpinKitDoubleBounce(
+                        size: 24,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
                     : SignalIcon(strength),
-                onTap: () async {
-                  setState(() {
-                    connecting = true;
-                  });
-                  await setDevice(device.address, device.name);
-                  if (mounted) {
-                    setState(() {
-                      connecting = false;
-                    });
-                  }
-                },
-              );
+            onTap: () async {
+              setState(() {
+                connecting = true;
+              });
+              await setDevice(device.address, device.name);
+              if (mounted) {
+                setState(() {
+                  connecting = false;
+                });
+              }
             },
           );
         },
       );
+    },
+  );
 }
 
 class SignalIcon extends StatelessWidget {
@@ -392,13 +390,13 @@ class SignalIcon extends StatelessWidget {
   final double level;
   @override
   Widget build(BuildContext context) {
-    final color = Color.lerp(Colors.orange, Colors.green, level + 0.2);
+    final Color? color = Color.lerp(Colors.orange, Colors.green, level + 0.2);
     return SizedBox(
       width: 32,
       height: 32,
       child: Stack(
         alignment: Alignment.center,
-        children: [
+        children: <Widget>[
           Padding(
             padding: const EdgeInsets.all(7),
             child: Align(
@@ -413,10 +411,7 @@ class SignalIcon extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(
-            Icons.signal_cellular_null_rounded,
-            color: Colors.black,
-          ),
+          const Icon(Icons.signal_cellular_null_rounded, color: Colors.black),
         ],
       ),
     );
@@ -426,7 +421,7 @@ class SignalIcon extends StatelessWidget {
 class _TriangleClipPath extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    final path = Path();
+    final Path path = Path();
     path.moveTo(0, size.height);
     path.lineTo(size.width, 0);
     path.lineTo(size.width, size.height);
@@ -439,30 +434,28 @@ class _TriangleClipPath extends CustomClipper<Path> {
 }
 
 class _EmptyDevices extends StatelessWidget {
-  const _EmptyDevices({this.text = "", Key? key}) : super(key: key);
-  final String text;
+  const _EmptyDevices({super.key});
+  final String text='';
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
+        children: <Widget>[
           Container(
             padding: const EdgeInsets.all(16),
-            constraints: const BoxConstraints(
-              maxWidth: 300,
-            ),
+            constraints: const BoxConstraints(maxWidth: 300),
             child: const Image(
-                image: AssetImage(
-                    'assets/images/undraw_Location_search_re_ttoj.png')),
+              image: AssetImage(
+                "assets/images/undraw_Location_search_re_ttoj.png",
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             "No ScientISST Sense devices found.",
-            style: TextStyle(
-              fontSize: 14,
-            ),
+            style: TextStyle(fontSize: 14),
           ),
         ],
       ),

@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 
 class MyTopBar extends StatelessWidget implements PreferredSizeWidget {
-  const MyTopBar({required this.child, this.actions, Key? key})
-      : super(key: key);
+  const MyTopBar({required this.child, this.actions, super.key});
 
   final Widget child;
   final List<Widget>? actions;
@@ -37,8 +36,8 @@ class MyTopBar extends StatelessWidget implements PreferredSizeWidget {
 class MyClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    final path = Path();
-    final height3 = size.height / 3;
+    final Path path = Path();
+    final double height3 = size.height / 3;
     path.lineTo(0, height3);
     path.arcToPoint(
       Offset(height3, 2 * height3),

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 
 class Review extends StatefulWidget {
-  const Review(this.path, {Key? key}) : super(key: key);
+  const Review(this.path, {super.key});
 
   final String path;
 

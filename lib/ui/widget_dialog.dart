@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 
 class WidgetDialog extends StatelessWidget {
-  const WidgetDialog({required this.child, this.icon, Key? key})
-      : super(key: key);
+  const WidgetDialog({required this.child, this.icon, super.key});
 
   final Widget child;
   final Widget? icon;
@@ -18,7 +17,8 @@ class WidgetDialog extends StatelessWidget {
           Container(
             // Bottom rectangular box
             margin: const EdgeInsets.only(
-                top: 40), // to push the box half way below circle
+              top: 40,
+            ), // to push the box half way below circle
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -36,9 +36,7 @@ class WidgetDialog extends StatelessWidget {
             top: 50,
             right: 10,
             child: IconButton(
-              icon: const Icon(
-                Icons.close_rounded,
-              ),
+              icon: const Icon(Icons.close_rounded),
               color: Colors.grey,
               onPressed: () {
                 Navigator.of(context).pop("Dismiss");
@@ -51,10 +49,7 @@ class WidgetDialog extends StatelessWidget {
               backgroundColor: Theme.of(context).primaryColor,
               maxRadius: 32.0,
               child: IconTheme(
-                data: const IconThemeData(
-                  size: 32,
-                  color: Colors.white,
-                ),
+                data: const IconThemeData(size: 32, color: Colors.white),
                 child: icon!,
               ),
             )

@@ -1,9 +1,16 @@
-# sense
+# sense_new
 
-## Disclaimer
+A new Flutter project.
 
-This is not a medical device certified for diagnosis or treatment. It is provided to you as is only for research and educational purposes.
+## Getting Started
 
-## Acknowledgments
+This project is a starting point for a Flutter application.
 
-This work was partially supported by Fundação para a Ciência e Tecnologia (FCT) under the projects’ UIDB/50008/2020 and DSAIPA/AI/0122/2020 (AIMHealth) through IT—Instituto de Telecomunicações, which is gratefully acknowledged. 
+A few resources to get you started if this is your first Flutter project:
+
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
